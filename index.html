@@ -1,111 +1,49 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL ACCESS - DEVNVIOS</title>
+    <meta charset="UTF-8"><title>TERMINAL - DEVNVIOS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
-        body { background: #000; color: #ff0000; font-family: 'Space Mono', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
-        .neon-frame { position: relative; padding: 2px; background: linear-gradient(90deg, #ff0000, #220000, #ff0000); background-size: 200%; animation: move 0.8s linear infinite; border-radius: 4px; box-shadow: 0 0 30px rgba(255, 0, 0, 0.4); }
-        @keyframes move { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
-        .terminal { background: #050505; padding: 40px 30px; width: 100%; max-width: 500px; position: relative; border: 1px solid rgba(255, 0, 0, 0.2); }
-        #key-box { background: #000; border: 1px solid #ff0000; color: #fff; padding: 30px; font-size: 1rem; text-align: center; font-weight: bold; min-height: 140px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.2); margin-bottom: 20px; word-break: break-all; }
-        .btn-exec { background: #ff0000; color: #000; width: 100%; padding: 18px; font-weight: 900; letter-spacing: 2px; cursor: pointer; border: none; transition: 0.2s; clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%); }
-        .btn-exec:hover:not(:disabled) { background: #fff; box-shadow: 0 0 20px #fff; }
-        .btn-exec:disabled { background: #333; color: #666; cursor: not-allowed; }
-        .contact-link { display: flex; align-items: center; gap: 10px; padding: 10px; border-left: 2px solid #ff0000; background: #0a0a0a; margin-top: 10px; transition: 0.3s; text-decoration: none; }
+        body { background: #000; color: #ff0000; font-family: monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin:0; }
+        .terminal { border: 1px solid #ff0000; padding: 30px; background: #050505; width: 450px; box-shadow: 0 0 15px rgba(255,0,0,0.3); }
+        input { background: #000; border: 1px solid #ff0000; color: #fff; width: 100%; padding: 10px; text-align: center; margin-bottom: 20px; outline: none; }
+        .btn-exec { background: #ff0000; color: #000; width: 100%; padding: 15px; font-weight: bold; cursor: pointer; border: none; }
+        #result-box { margin-top: 20px; padding: 15px; border: 1px solid #333; min-height: 50px; text-align: center; word-break: break-all; font-weight: bold; color: #00ff00; }
     </style>
 </head>
 <body>
-
-    <div class="neon-frame">
-        <div class="terminal">
-            <div class="flex justify-between items-center mb-6 text-[10px] font-bold">
-                <span>[ AUTHENTICATION SYSTEM ]</span>
-                <span id="status-tag" class="animate-pulse text-red-500">SECURED SESSION</span>
-            </div>
-            
-            <div id="key-box">
-                <span class="animate-pulse text-yellow-500">INITIALIZING SECURITY...</span>
-            </div>
-
-            <div id="action-area">
-                <button id="main-btn" onclick="handleCopy()" class="btn-exec" disabled>EXECUTE COPY</button>
-            </div>
-
-            <div id="verify-area" class="hidden mt-4">
-                <button onclick="goToLink()" class="btn-exec" style="background:#fff; color:#000;">GET ACCESS TOKEN</button>
-            </div>
-
-            <div class="mt-8 space-y-2">
-                <a href="https://devnvios.io.vn" target="_blank" class="contact-link">
-                    <i class="fas fa-globe text-xs"></i>
-                    <span class="text-[10px] font-bold text-white uppercase italic">Official Store: devnvios.io.vn</span>
-                </a>
-            </div>
+    <div class="terminal">
+        <div style="font-size: 10px; margin-bottom: 20px;">[ SYSTEM VERIFICATION ]</div>
+        <input type="text" id="tokenInput" placeholder="DÁN MÃ XÁC THỰC VÀO ĐÂY...">
+        <button onclick="verify()" id="btn" class="btn-exec">EXECUTE VERIFY</button>
+        <div id="result-box">CHỜ XÁC MINH...</div>
+        <div style="margin-top: 20px; font-size: 10px;">
+            <a href="LINK_RUT_GON_CUA_BAN" style="color:#fff; text-decoration: underline;">Chưa có mã? Vượt link lấy mã tại đây</a>
         </div>
     </div>
 
     <script>
-        /**
-         * 1. THAY LINK GOOGLE SCRIPT CỦA BẠN VÀO ĐÂY
-         * Để an toàn, hãy vào trang 'base64encode.org', dán link GAS vào đó,
-         * lấy chuỗi kết quả dán vào ENCODED_URL bên dưới.
-         */
-        const ENCODED_URL = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J5cVQySkx3S1ZnQW9wX2k5OFc1WXNIcmtxTVd5VmpzemdmR3d3NHF1UmJfaU4yN0VrTFp2OF9ycl8yZ0lZazl3QlQvZXhlYw=="; 
+        const API = "URL_WEB_APP_CỦA_BẠN"; // Dán link Apps Script vào đây
 
-        function goToLink() {
-            // Thay link rút gọn của bạn vào đây
-            window.location.href = "https://your-short-link.com";
-        }
+        async function verify() {
+            const val = document.getElementById('tokenInput').value;
+            const resBox = document.getElementById('result-box');
+            if(!val) return alert("Nhập mã đi bạn ơi!");
 
-        async function init() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
-            const keyBox = document.getElementById('key-box');
-            const verifyArea = document.getElementById('verify-area');
-            const mainBtn = document.getElementById('main-btn');
-
-            // CHỐNG TRUY CẬP TRỰC TIẾP KHÔNG CÓ TOKEN
-            if (!token) {
-                keyBox.innerHTML = "<span class='text-red-500'>ACCESS DENIED!</span><br><p class='text-[10px] text-gray-500'>Vui lòng vượt link để lấy Token.</p>";
-                verifyArea.classList.remove('hidden');
-                mainBtn.classList.add('hidden');
-                return;
-            }
-
-            // GỌI API ĐỂ LẤY KEY
+            resBox.innerText = "ĐANG KIỂM TRA...";
             try {
-                const api = atob(ENCODED_URL);
-                const response = await fetch(`${api}?token=${token}`);
-                const result = await response.text();
-
-                if (result.includes("LỖI")) {
-                    keyBox.innerHTML = `<span class='text-red-500'>${result}</span>`;
+                const res = await fetch(`${API}?action=verify&token=${val}`);
+                const key = await res.text();
+                
+                if(key.includes("DEV-")) {
+                    resBox.innerHTML = `KEY CỦA BẠN:<br><span style="color:#fff; font-size:18px">${key}</span>`;
+                    alert("XÁC MINH THÀNH CÔNG!");
                 } else {
-                    keyBox.innerText = result;
-                    mainBtn.disabled = false;
+                    resBox.innerText = key;
+                    resBox.style.color = "red";
                 }
-            } catch (err) {
-                keyBox.innerText = "SERVER CONNECTION ERROR";
-            }
+            } catch (e) { resBox.innerText = "LỖI SERVER!"; }
         }
-
-        function handleCopy() {
-            const text = document.getElementById('key-box').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert("COPY THÀNH CÔNG! TOKEN SẼ HẾT HẠN NGAY BÂY GIỜ.");
-                // Xóa token trên URL ngay lập tức để không ai dùng lại được link đó
-                window.history.replaceState({}, document.title, window.location.pathname);
-                location.reload();
-            });
-        }
-
-        init();
     </script>
 </body>
-                        </html>
-                        
+</html>
