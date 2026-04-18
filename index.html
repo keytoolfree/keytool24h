@@ -3,121 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SECURE SYSTEM - DEVNVIOS</title>
+    <title>TERMINAL ACCESS - DEVNVIOS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
         body { background: #000; color: #ff0000; font-family: 'Space Mono', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
-        .terminal-box { border: 2px solid #ff0000; background: #050505; padding: 40px; width: 100%; max-width: 500px; box-shadow: 0 0 30px rgba(255, 0, 0, 0.4); text-align: center; position: relative; }
-        #key-box { background: #000; border: 1px solid #ff0000; color: #fff; padding: 30px; margin: 20px 0; min-height: 120px; display: flex; align-items: center; justify-content: center; font-weight: bold; position: relative; }
-        .btn-action { background: #ff0000; color: #000; width: 100%; padding: 18px; font-weight: 900; cursor: pointer; border: none; clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%); transition: 0.3s; text-transform: uppercase; display: block; }
-        .btn-action:hover { background: #fff; box-shadow: 0 0 20px #fff; }
-        .link-new { color: #00fbff; text-decoration: underline; font-size: 14px; font-weight: bold; }
-        .hidden { display: none !important; }
-        #timer { font-size: 1.5rem; color: #ff0000; text-shadow: 0 0 10px #ff0000; }
+        .neon-frame { position: relative; padding: 2px; background: linear-gradient(90deg, #ff0000, #220000, #ff0000); background-size: 200%; animation: move 0.8s linear infinite; border-radius: 4px; box-shadow: 0 0 30px rgba(255, 0, 0, 0.4); }
+        @keyframes move { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+        .terminal { background: #050505; padding: 40px 30px; width: 100%; max-width: 500px; position: relative; border: 1px solid rgba(255, 0, 0, 0.2); }
+        #key-box { background: #000; border: 1px solid #ff0000; color: #fff; padding: 30px; font-size: 1rem; text-align: center; font-weight: bold; min-height: 140px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.2); margin-bottom: 20px; word-break: break-all; }
+        .btn-exec { background: #ff0000; color: #000; width: 100%; padding: 18px; font-weight: 900; letter-spacing: 2px; cursor: pointer; border: none; transition: 0.2s; clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%); }
+        .btn-exec:hover:not(:disabled) { background: #fff; box-shadow: 0 0 20px #fff; }
+        .btn-exec:disabled { background: #333; color: #666; cursor: not-allowed; }
+        .contact-link { display: flex; align-items: center; gap: 10px; padding: 10px; border-left: 2px solid #ff0000; background: #0a0a0a; margin-top: 10px; transition: 0.3s; text-decoration: none; }
     </style>
 </head>
 <body>
 
-    <div class="terminal-box">
-        <div class="flex justify-between text-[10px] mb-4 text-gray-500">
-            <span>[ HWID_ENCRYPT_ACTIVE ]</span>
-            <span id="device-tag">SCANNING...</span>
-        </div>
-
-        <h1 class="text-xl mb-6 font-black italic tracking-tighter">SECURE AUTHORIZATION</h1>
-
-        <div id="key-box">
-            <span class="animate-pulse">ĐANG KIỂM TRA THIẾT BỊ...</span>
-        </div>
-
-        <div id="btn-area">
-            <button id="copy-btn" onclick="handleCopy()" class="btn-action hidden">SAO CHÉP KEY</button>
+    <div class="neon-frame">
+        <div class="terminal">
+            <div class="flex justify-between items-center mb-6 text-[10px] font-bold">
+                <span>[ AUTHENTICATION SYSTEM ]</span>
+                <span id="status-tag" class="animate-pulse text-red-500">SECURED SESSION</span>
+            </div>
             
-            <a id="get-link-btn" href="https://link4m.net/40p7513R" target="_blank" class="btn-action hidden">BẤM VÀO ĐÂY ĐỂ LẤY KEY MỚI</a>
-        </div>
+            <div id="key-box">
+                <span class="animate-pulse text-yellow-500">INITIALIZING SECURITY...</span>
+            </div>
 
-        <div id="vip-area" class="mt-6 p-3 border border-red-900 bg-red-950/20">
-            <p class="text-[10px] text-gray-400">Nếu mua <span class="text-white">KEY VIP</span> bạn có thể sử dụng những tool đẳng cấp nhất Việt Nam tại <a href="https://devnvios.io.vn" class="text-blue-500 underline font-bold">devnvios.io.vn</a></p>
-        </div>
+            <div id="action-area">
+                <button id="main-btn" onclick="handleCopy()" class="btn-exec" disabled>EXECUTE COPY</button>
+            </div>
 
-        <div class="mt-6 text-[9px] text-gray-700">© DEVNVIOS SYSTEM | ADMIN @IOSNEA</div>
+            <div id="verify-area" class="hidden mt-4">
+                <button onclick="goToLink()" class="btn-exec" style="background:#fff; color:#000;">GET ACCESS TOKEN</button>
+            </div>
+
+            <div class="mt-8 space-y-2">
+                <a href="https://devnvios.io.vn" target="_blank" class="contact-link">
+                    <i class="fas fa-globe text-xs"></i>
+                    <span class="text-[10px] font-bold text-white uppercase italic">Official Store: devnvios.io.vn</span>
+                </a>
+            </div>
+        </div>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqT2JLwKVgAop_i98W5YsHrkqMWyVjszgfGww4quRb_iN27EkLZv8_rr_2gIYk9wBT/exec";
-        const WAIT_TIME = 24 * 60 * 60 * 1000;
+        /**
+         * 1. THAY LINK GOOGLE SCRIPT CỦA BẠN VÀO ĐÂY
+         * Để an toàn, hãy vào trang 'base64encode.org', dán link GAS vào đó,
+         * lấy chuỗi kết quả dán vào ENCODED_URL bên dưới.
+         */
+        const ENCODED_URL = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J5cVQySkx3S1ZnQW9wX2k5OFc1WXNIcmtxTVd5VmpzemdmR3d3NHF1UmJfaU4yN0VrTFp2OF9ycl8yZ0lZazl3QlQvZXhlYw=="; 
+
+        function goToLink() {
+            // Thay link rút gọn của bạn vào đây
+            window.location.href = "https://your-short-link.com";
+        }
 
         async function init() {
-            // 1. Lấy Fingerprint để lưu thiết bị cho cứng
-            const fp = await FingerprintJS.load();
-            const result = await fp.get();
-            const deviceId = result.visitorId;
-            document.getElementById('device-tag').innerText = "DEVICE_ID: " + deviceId.substring(0,8).toUpperCase();
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const keyBox = document.getElementById('key-box');
+            const verifyArea = document.getElementById('verify-area');
+            const mainBtn = document.getElementById('main-btn');
 
-            const display = document.getElementById('key-box');
-            const copyBtn = document.getElementById('copy-btn');
-            const getLinkBtn = document.getElementById('get-link-btn');
+            // CHỐNG TRUY CẬP TRỰC TIẾP KHÔNG CÓ TOKEN
+            if (!token) {
+                keyBox.innerHTML = "<span class='text-red-500'>ACCESS DENIED!</span><br><p class='text-[10px] text-gray-500'>Vui lòng vượt link để lấy Token.</p>";
+                verifyArea.classList.remove('hidden');
+                mainBtn.classList.add('hidden');
+                return;
+            }
 
-            // 2. Kiểm tra xem thiết bị này có đang bị khóa 24h không
-            const lockTime = localStorage.getItem('lock_' + deviceId);
-            const now = new Date().getTime();
+            // GỌI API ĐỂ LẤY KEY
+            try {
+                const api = atob(ENCODED_URL);
+                const response = await fetch(`${api}?token=${token}`);
+                const result = await response.text();
 
-            if (lockTime && now < lockTime) {
-                // ĐANG TRONG THỜI GIAN KHÓA 24H -> Bắt vượt link tiếp để lấy key mới
-                display.innerHTML = `<div>
-                    <p class="text-[10px] text-red-500 font-bold mb-2">THIẾT BỊ ĐÃ HẾT PHIÊN LÀM VIỆC</p>
-                    <p class="text-[11px] text-gray-400">Vui lòng vượt link để nhận mã mới</p>
-                </div>`;
-                getLinkBtn.classList.remove('hidden');
-                copyBtn.classList.add('hidden');
-            } else {
-                // CHƯA KHÓA HOẶC HẾT 24H -> Cho phép lấy key
-                try {
-                    const res = await fetch(SCRIPT_URL);
-                    const key = await res.text();
-                    const cleanKey = key.trim();
-
-                    if(cleanKey && cleanKey !== "HẾT KEY RỒI!") {
-                        display.innerText = cleanKey;
-                        copyBtn.classList.remove('hidden');
-                    } else {
-                        display.innerText = "HỆ THỐNG ĐANG BẢO TRÌ";
-                    }
-                } catch (e) {
-                    display.innerText = "LỖI KẾT NỐI SERVER";
+                if (result.includes("LỖI")) {
+                    keyBox.innerHTML = `<span class='text-red-500'>${result}</span>`;
+                } else {
+                    keyBox.innerText = result;
+                    mainBtn.disabled = false;
                 }
+            } catch (err) {
+                keyBox.innerText = "SERVER CONNECTION ERROR";
             }
         }
 
         function handleCopy() {
-            const display = document.getElementById('key-box');
-            const keyText = display.innerText;
-            if (keyText.length < 5 || keyText.includes("...")) return;
-
-            // Lấy ID thiết bị để khóa
-            FingerprintJS.load().then(fp => fp.get()).then(result => {
-                const deviceId = result.visitorId;
-
-                navigator.clipboard.writeText(keyText).then(() => {
-                    alert(" [ SECURITY ALERT ] \n\n - ĐÃ SAO CHÉP KEY.\n - THIẾT BỊ NÀY ĐÃ ĐƯỢC LƯU VÀO HỆ THỐNG.\n - SAU 24 GIỜ VUI LÒNG VƯỢT LINK LẠI ĐỂ LẤY KEY MỚI.");
-
-                    // KHÓA THIẾT BỊ TRONG 24H
-                    localStorage.setItem('lock_' + deviceId, new Date().getTime() + WAIT_TIME);
-
-                    // MÃ HÓA NGAY LẬP TỨC
-                    display.innerHTML = `<span class="text-red-600 font-bold text-xs uppercase">Key đã mã hóa & Đã lưu thiết bị.</span>`;
-                    document.getElementById('copy-btn').classList.add('hidden');
-                    
-                    // Hiện nút bắt vượt link cho lần sau
-                    setTimeout(() => { location.reload(); }, 2000);
-                });
+            const text = document.getElementById('key-box').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("COPY THÀNH CÔNG! TOKEN SẼ HẾT HẠN NGAY BÂY GIỜ.");
+                // Xóa token trên URL ngay lập tức để không ai dùng lại được link đó
+                window.history.replaceState({}, document.title, window.location.pathname);
+                location.reload();
             });
         }
 
         init();
     </script>
 </body>
-</html>
+                        </html>
+                        
