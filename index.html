@@ -93,8 +93,8 @@
     <div id="toast">ĐÃ SAO CHÉP! HÃY DÁN VÀO TRANG WEB CHÍNH</div>
 
     <script>
-        // QUAN TRỌNG: Dán link Web App từ Google Sheets của bạn vào đây
-        const SCRIPT_URL = "DÁN_LINK_GOOGLE_APPS_SCRIPT_CỦA_BẠN_VÀO_ĐÂY";
+        // DÁN LINK GOOGLE APPS SCRIPT (WEB APP URL) VÀO ĐÂY
+        const SCRIPT_URL = "DÁN_LINK_APPS_SCRIPT_CỦA_BẠN_VÀO_ĐÂY";
 
         async function fetchKey() {
             try {
@@ -117,7 +117,7 @@
 
                 document.getElementById('key-display').style.opacity = "0.1";
                 
-                // Tự động load lại để "đốt" key cũ và hiện key mới sau 2 giây
+                // Tự động load lại sau 2 giây để Google Sheets kịp xóa dòng cũ
                 setTimeout(() => {
                     location.reload();
                 }, 2000);
