@@ -2,88 +2,76 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>VERIFYING ACCESS - DEVNVIOS</title>
+    <title>TOKEN GENERATOR - DEVNVIOS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #000; color: #ff0000; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .box { border: 1px solid #ff0000; padding: 40px; background: #050505; text-align: center; width: 400px; box-shadow: 0 0 20px rgba(255,0,0,0.5); }
-        #token-display { font-size: 20px; color: #fff; margin: 25px 0; padding: 15px; border: 1px dashed #ff0000; background: #111; min-height: 50px; }
-        .btn-copy { background: #fff; color: #000; width: 100%; padding: 12px; font-weight: bold; cursor: pointer; border: none; transition: 0.3s; }
+        .box { border: 1px solid #ff0000; padding: 40px; background: #050505; text-align: center; width: 400px; box-shadow: 0 0 25px rgba(255,0,0,0.4); }
+        #token-display { font-size: 24px; color: #fff; margin: 25px 0; padding: 20px; border: 1px dashed #ff0000; background: #111; letter-spacing: 3px; }
+        .btn-copy { background: #fff; color: #000; width: 100%; padding: 14px; font-weight: bold; cursor: pointer; border: none; transition: 0.3s; }
         .btn-copy:hover:not(:disabled) { background: #ff0000; color: #fff; }
-        .btn-copy:disabled { background: #333; color: #666; cursor: not-allowed; }
-        .error-text { color: #ff0000; font-weight: bold; font-size: 14px; line-height: 1.6; }
+        .btn-copy:disabled { background: #222; color: #444; cursor: not-allowed; }
+        .error-msg { color: #ff0000; border: 2px solid #ff0000; padding: 20px; background: #1a0000; }
     </style>
 </head>
 <body>
+    <div id="secure-zone" class="box hidden">
+        <div style="font-size: 11px; margin-bottom: 10px;">[ ACCESS GRANTED ]</div>
+        <p style="font-size: 12px; color: #555;">MÃ TOKEN CỦA BẠN LÀ:</p>
+        <div id="token-display">********</div>
+        <button onclick="copyToken()" id="copyBtn" class="btn-copy" disabled>SAO CHÉP MÃ</button>
+        <p style="font-size: 10px; color: #444; margin-top: 25px;">SAO CHÉP VÀ QUAY LẠI TRANG CHỦ ĐỂ NHẬN KEY</p>
+    </div>
 
-    <div class="box">
-        <div style="font-size: 10px; letter-spacing: 2px; margin-bottom: 20px;">[ SECURITY GATEWAY ]</div>
-        
-        <div id="content-area">
-            <p id="msg">ĐANG KIỂM TRA NGUỒN GỐC TRUY CẬP...</p>
-            <div id="token-display" class="hidden">********</div>
-            <button onclick="copyToken()" id="copyBtn" class="btn-copy" disabled>SAO CHÉP TOKEN</button>
-        </div>
+    <div id="error-zone" class="error-msg hidden">
+        <h2 style="font-weight: bold;">TRUY CẬP BỊ TỪ CHỐI</h2>
+        <p style="font-size: 12px; margin-top: 10px;">Bạn phải vượt link từ Link4M mới có thể lấy mã!</p>
+        <a href="https://link4m.net/40p7513R" style="display: block; margin-top: 15px; color: #fff; text-decoration: underline;">Click để vượt link lại</a>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyLkLo8xV73F4WgTZxITt-XcX2yapCVuqiBat8JEh85nLxjeokyIKK8pa1Lg03djLkr/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbymLRM2XANAGkaOy1MG1oBuaQKzKYR92tmjHyiph92uTvQKV56sJ2RvPL0AGflVMVs/exec";
         const SECRET = "DEVNVIOS_PRO_2026";
 
-        async function validateAndGenerate() {
-            const display = document.getElementById('token-display');
-            const msg = document.getElementById('msg');
-            
-            // 1. KIỂM TRA REFERRER (Nguồn gốc truy cập)
-            // Lưu ý: Một số trình duyệt bảo mật cao có thể ẩn referrer, nhưng Link4M thường sẽ để lại dấu vết.
+        async function init() {
             const ref = document.referrer;
-            
-            // Kiểm tra xem trang trước đó có phải là link4m không
+            // Kiểm tra nguồn từ Link4M (hỗ trợ cả .net và .com)
             if (!ref.includes("link4m.net") && !ref.includes("link4m.com")) {
-                msg.innerHTML = "<span class='error-text'>TRUY CẬP TRÁI PHÉP!<br>Bạn phải vượt link từ Link4M mới có thể lấy mã.</span>";
-                msg.innerHTML += "<br><br><a href='https://link4m.net/40p7513R' style='color:white; text-decoration:underline;'>Bấm vào đây để vượt link đúng</a>";
+                document.getElementById('error-zone').classList.remove('hidden');
                 return;
             }
 
-            // 2. NẾU ĐÚNG NGUỒN THÌ TIẾN HÀNH LẤY IP VÀ TOKEN
-            msg.innerText = "XÁC MINH THÀNH CÔNG! ĐANG TẠO MÃ...";
-            display.classList.remove('hidden');
+            document.getElementById('secure-zone').classList.remove('hidden');
+            const display = document.getElementById('token-display');
 
             try {
-                // Lấy IP để giới hạn 24h (Chống một IP lấy nhiều mã)
+                // Lấy IP để giới hạn 24h
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
-                const userIP = ipData.ip;
                 const deviceID = navigator.userAgent.length + "-" + screen.width;
 
-                // Gọi Google Apps Script
-                const res = await fetch(`${API_URL}?action=generate&secret=${SECRET}&ip=${userIP}&device=${deviceID}`);
-                const result = await res.text();
+                const res = await fetch(`${API_URL}?action=generate&secret=${SECRET}&ip=${ipData.ip}&device=${deviceID}`);
+                const token = await res.text();
                 
-                if (result.includes("LỖI")) {
-                    display.innerText = "CHẶN SPAM";
-                    msg.innerText = result; // Hiện thông báo đợi 24h
-                    msg.style.color = "yellow";
-                } else {
-                    display.innerText = result;
+                display.innerText = token;
+                if (!token.includes("LỖI")) {
                     document.getElementById('copyBtn').disabled = false;
-                    msg.innerText = "HÃY SAO CHÉP MÃ BÊN DƯỚI:";
+                } else {
+                    display.style.fontSize = "14px";
+                    display.style.color = "yellow";
                 }
             } catch (e) {
-                display.innerText = "LỖI SERVER";
+                display.innerText = "LỖI SERVER!";
             }
         }
 
         function copyToken() {
-            const text = document.getElementById('token-display').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert("Đã copy Token! Quay lại trang chủ và dán vào.");
+            const t = document.getElementById('token-display').innerText;
+            navigator.clipboard.writeText(t).then(() => {
+                alert("Đã sao chép Token!");
             });
         }
-
-        // Chạy kiểm tra khi load trang
-        validateAndGenerate();
+        init();
     </script>
 </body>
 </html>
-
