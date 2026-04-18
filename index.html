@@ -2,52 +2,54 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TERMINAL ACCESS - DEVNVIOS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #000; color: #ff0000; font-family: monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .terminal { border: 1px solid #ff0000; padding: 30px; background: #050505; width: 400px; box-shadow: 0 0 15px rgba(255,0,0,0.5); text-align: center; }
-        input { background: #000; border: 1px solid #ff0000; color: #fff; width: 100%; padding: 12px; text-align: center; margin: 20px 0; outline: none; }
-        .btn-exec { background: #ff0000; color: #000; width: 100%; padding: 15px; font-weight: bold; cursor: pointer; border: none; text-transform: uppercase; }
-        .btn-get { display: block; margin-top: 15px; color: #fff; font-size: 11px; text-decoration: underline; opacity: 0.7; }
-        .btn-get:hover { opacity: 1; color: #ff0000; }
-        #result { margin-top: 20px; color: #00ff00; font-weight: bold; min-height: 40px; word-break: break-all; }
+        body { background: #000; color: #ff0000; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .terminal { border: 1px solid #ff0000; padding: 25px; background: #050505; width: 380px; box-shadow: 0 0 20px rgba(255,0,0,0.4); text-align: center; }
+        input { background: #000; border: 1px solid #ff0000; color: #fff; width: 100%; padding: 12px; text-align: center; margin: 15px 0; outline: none; border-radius: 4px; }
+        .btn-exec { background: #ff0000; color: #000; width: 100%; padding: 14px; font-weight: bold; cursor: pointer; border: none; text-transform: uppercase; transition: 0.3s; }
+        .btn-exec:hover { background: #fff; box-shadow: 0 0 10px #fff; }
+        .btn-get { display: inline-block; margin-top: 15px; color: #fff; font-size: 12px; text-decoration: none; border: 1px solid #333; padding: 8px 15px; border-radius: 4px; }
+        .btn-get:hover { border-color: #ff0000; color: #ff0000; }
+        #result { margin-top: 20px; color: #00ff00; font-weight: bold; min-height: 45px; word-break: break-all; border-top: 1px solid #222; padding-top: 10px; }
     </style>
 </head>
 <body>
     <div class="terminal">
-        <div style="font-size: 12px;">[ SYSTEM VERIFICATION ]</div>
-        
+        <div style="font-size: 11px; letter-spacing: 2px;">[ AUTHENTICATION ]</div>
         <input type="text" id="tokenInput" placeholder="DÁN MÃ TOKEN VÀO ĐÂY...">
-        
         <button onclick="verify()" id="execBtn" class="btn-exec">XÁC MINH NGAY</button>
-        
-        <div id="result">CHỜ NHẬP MÃ...</div>
-
-        <a href="get-token.html" target="_blank" class="btn-get">BẤM VÀO ĐÂY ĐỂ LẤY MÃ (TOKEN)</a>
+        <div id="result">HỆ THỐNG SẴN SÀNG...</div>
+        <a href="get-token.html" target="_blank" class="btn-get">CLICK LẤY MÃ TOKEN</a>
     </div>
 
     <script>
-        const API_URL = "URL_WEB_APP_GOOGLE_SCRIPT_CỦA_BẠN";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyLkLo8xV73F4WgTZxITt-XcX2yapCVuqiBat8JEh85nLxjeokyIKK8pa1Lg03djLkr/exec";
 
         async function verify() {
-            const token = document.getElementById('tokenInput').value;
+            const token = document.getElementById('tokenInput').value.trim();
             const resBox = document.getElementById('result');
-            if(!token) return alert("Bạn chưa nhập mã Token!");
+            if(!token) return alert("Nhập mã Token bạn lấy từ link vượt!");
 
-            resBox.innerText = "ĐANG KIỂM TRA...";
+            resBox.innerText = "ĐANG KIỂM TRA MÃ...";
+            resBox.style.color = "#ffff00";
+
             try {
-                const res = await fetch(`${API_URL}?action=verify&token=${token}`);
-                const data = await res.text();
+                const response = await fetch(`${API_URL}?action=verify&token=${token}`);
+                const data = await response.text();
                 
                 if(data.includes("DEV-")) {
-                    resBox.innerHTML = `KEY CỦA BẠN:<br><span style="color:#fff; font-size:18px;">${data}</span>`;
+                    resBox.style.color = "#00ff00";
+                    resBox.innerHTML = `KEY CỦA BẠN:<br><span style="color:#fff; font-size:16px;">${data}</span>`;
                 } else {
                     resBox.innerText = data;
-                    resBox.style.color = "red";
+                    resBox.style.color = "#ff0000";
                 }
             } catch (e) {
-                resBox.innerText = "LỖI KẾT NỐI SERVER!";
+                resBox.innerText = "LỖI: KHÔNG THỂ KẾT NỐI SERVER!";
+                resBox.style.color = "#ff0000";
             }
         }
     </script>
