@@ -3,56 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GET KEY FREE</title>
+    <title>VIP GET KEY - DEVNVIOS</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background: #000; color: #0f0; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { border: 2px solid #0f0; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 0 20px #0f0; background: rgba(0,0,0,0.9); max-width: 90%; }
-        .key-box { background: #111; border: 1px dashed #0f0; padding: 15px; margin: 20px 0; font-size: 1.2rem; word-break: break-all; min-height: 50px; }
-        button { background: #0f0; color: #000; font-weight: bold; padding: 10px 25px; border: none; border-radius: 5px; cursor: pointer; text-transform: uppercase; }
-        button:hover { background: #0c0; box-shadow: 0 0 10px #0f0; }
+        body { background: #050505; color: white; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
+        
+        /* KHUNG VIỀN RGB CHẠY SIÊU NHANH */
+        .rgb-wrapper {
+            position: relative;
+            padding: 3px;
+            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+            background-size: 400%;
+            border-radius: 24px;
+            animation: rgb-move 1.5s linear infinite;
+            box-shadow: 0 0 40px rgba(255, 0, 0, 0.3);
+        }
+
+        @keyframes rgb-move {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(13, 17, 23, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 21px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+
+        /* KHUNG HIỂN THỊ KEY */
+        #key-box {
+            background: #000;
+            border: 2px solid #1f2937;
+            color: #00ffaa;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+            text-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+            transition: 0.3s;
+        }
+
+        /* NÚT COPY ĐỔI MÀU */
+        .btn-glow {
+            background: linear-gradient(to right, #ff004c, #ff7b00);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-glow:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255, 0, 76, 0.4); filter: brightness(1.2); }
+        .btn-glow:active { transform: scale(0.95); }
+
+        /* TOAST NOTIFICATION */
+        #toast {
+            visibility: hidden; background: #00ffaa; color: #000; font-weight: 900;
+            padding: 14px 28px; border-radius: 12px; position: fixed;
+            bottom: 30px; left: 50%; transform: translateX(-50%);
+            box-shadow: 0 0 30px rgba(0, 255, 170, 0.6); z-index: 1000;
+        }
+        #toast.show { visibility: visible; animation: slideUp 0.4s, slideDown 0.4s 2.6s; }
+        @keyframes slideUp { from { bottom: -50px; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes slideDown { from { bottom: 30px; opacity: 1; } to { bottom: -50px; opacity: 0; } }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2 style="color: #fff; margin-bottom: 10px;">HỆ THỐNG LẤY KEY TỰ ĐỘNG</h2>
-        <p style="font-size: 0.8rem;">Vui lòng đợi trong giây lát...</p>
-        
-        <div id="key-display" class="key-box">ĐANG TẢI KEY...</div>
-        
-        <button onclick="copyKey()">SAO CHÉP KEY</button>
-        <p style="margin-top: 15px; font-size: 0.7rem; color: #888;">Sau khi copy, hãy quay lại web chính để kích hoạt.</p>
+
+    <div class="rgb-wrapper">
+        <div class="glass-card">
+            <h1 class="text-3xl font-black italic mb-2 tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500 uppercase">
+                Free Key System
+            </h1>
+            <p class="text-gray-500 text-[10px] font-bold tracking-widest uppercase mb-6">Powered by Devnvios</p>
+            
+            <div id="key-box" class="p-6 rounded-2xl mb-8 break-all font-bold border-2">
+                SCANNING...
+            </div>
+
+            <button onclick="handleCopy()" class="btn-glow w-full py-5 rounded-2xl text-white flex items-center justify-center gap-3 mb-8">
+                <i class="fas fa-magic"></i> SAO CHÉP KEY
+            </button>
+
+            <div class="grid grid-cols-1 gap-4 text-left border-t border-gray-800 pt-6">
+                <a href="https://devnvios.io.vn" target="_blank" class="flex items-center gap-4 bg-gray-900/50 p-3 rounded-xl hover:bg-gray-800 transition">
+                    <i class="fas fa-shopping-bag text-pink-500"></i>
+                    <div>
+                        <p class="text-[9px] text-gray-400 font-bold uppercase">Web Shop</p>
+                        <p class="text-xs font-bold">devnvios.io.vn</p>
+                    </div>
+                </a>
+
+                <a href="https://t.me/crackpythonva" target="_blank" class="flex items-center gap-4 bg-gray-900/50 p-3 rounded-xl hover:bg-gray-800 transition">
+                    <i class="fab fa-telegram text-blue-400 text-xl"></i>
+                    <div>
+                        <p class="text-[9px] text-gray-400 font-bold uppercase">Community</p>
+                        <p class="text-xs font-bold">t.me/crackpythonva</p>
+                    </div>
+                </a>
+
+                <a href="https://t.me/iosnea" target="_blank" class="flex items-center gap-4 bg-gray-900/50 p-3 rounded-xl hover:bg-gray-800 transition">
+                    <i class="fas fa-headset text-green-400"></i>
+                    <div>
+                        <p class="text-[9px] text-gray-400 font-bold uppercase">Support Admin</p>
+                        <p class="text-xs font-bold">@iosnea</p>
+                    </div>
+                </a>
+            </div>
+        </div>
     </div>
 
+    <div id="toast">COPIED & READY TO USE!</div>
+
     <script>
-        // LINK SCRIPT GOOGLE SHEETS CỦA BẠN
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqT2JLwKVgAop_i98W5YsHrkqMWyVjszgfGww4quRb_iN27EkLZv8_rr_2gIYk9wBT/exec";
 
-        async function fetchKey() {
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const data = await response.text();
-                document.getElementById('key-display').innerText = data.trim();
-            } catch (error) {
-                document.getElementById('key-display').innerText = "LỖI: KHÔNG LẤY ĐƯỢC KEY!";
-            }
-        }
-
-        function copyKey() {
-            const keyText = document.getElementById('key-display').innerText;
-            if(keyText && keyText !== "ĐANG TẢI KEY..." && keyText !== "LỖI: KHÔNG LẤY ĐƯỢC KEY!") {
-                navigator.clipboard.writeText(keyText).then(() => {
-                    alert("Đã sao chép: " + keyText);
-                    // Reload để lấy key mới (Google Script sẽ tự xóa dòng cũ)
-                    location.reload();
-                });
+        async function loadKey() {
+            // Kiểm tra máy đã có key chưa
+            const savedKey = localStorage.getItem('current_free_key');
+            
+            if (savedKey) {
+                document.getElementById('key-box').innerText = savedKey;
             } else {
-                alert("Chưa có key để copy!");
+                try {
+                    const response = await fetch(SCRIPT_URL);
+                    const key = await response.text();
+                    const cleanKey = key.trim();
+                    
+                    if(cleanKey && cleanKey !== "HẾT KEY RỒI!") {
+                        document.getElementById('key-box').innerText = cleanKey;
+                        localStorage.setItem('current_free_key', cleanKey);
+                    } else {
+                        document.getElementById('key-box').innerText = "HẾT KEY RỒI!";
+                    }
+                } catch (e) {
+                    document.getElementById('key-box').innerText = "CONNECTION ERROR!";
+                }
             }
         }
 
-        // Tự động chạy khi mở trang
-        fetchKey();
+        function handleCopy() {
+            const keyContent = document.getElementById('key-box').innerText;
+            if (keyContent.includes("...") || keyContent.includes("ERROR") || keyContent.includes("HẾT")) return;
+
+            navigator.clipboard.writeText(keyContent).then(() => {
+                // HIỆN TOAST
+                const t = document.getElementById("toast");
+                t.className = "show";
+                setTimeout(() => { t.className = ""; }, 3000);
+
+                // QUAN TRỌNG: XOÁ KEY KHỎI MÁY NGAY SAU KHI COPY
+                localStorage.removeItem('current_free_key');
+
+                // Hiệu ứng mờ dần báo hiệu key đã bị hủy
+                document.getElementById('key-box').style.opacity = "0.2";
+                document.getElementById('key-box').innerText = "USED - REFRESHING...";
+
+                // Tự động load lại sau 2 giây để lấy key mới cho lần sau
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            });
+        }
+
+        loadKey();
     </script>
 </body>
-</html>
+    </html>
+    
