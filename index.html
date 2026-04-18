@@ -1,129 +1,181 @@
+<?php 
+include 'db.php'; 
+session_start(); 
+
+// --- Tự động xóa key khi hết hạn ---
+if(isset($_SESSION['username'])){
+    $u_check = $_SESSION['username'];
+    mysqli_query($conn, "UPDATE users SET key_type = 'NONE', expiry_date = NULL WHERE username = '$u_check' AND expiry_date <= NOW() AND role != 1");
+}
+
+$configs = [];
+$res_config = mysqli_query($conn, "SELECT * FROM site_config");
+if($res_config) {
+    while($c = mysqli_fetch_assoc($res_config)) { 
+        $configs[$c['config_key']] = $c['config_value']; 
+    }
+}
+
+$logo_text = $configs['logo_text'] ?? 'DEVNVIOS.co';
+$chao_khach = $configs['chao_khach'] ?? 'Chào khách!';
+$banner_title = $configs['banner_title'] ?? 'DEVNVIOS.CO';
+$banner_desc = $configs['banner_desc'] ?? 'Tiện ích tool hỗ trợ & automation';
+$footer_made_by = $configs['footer_made_by'] ?? 'DEVNVIOS';
+$footer_year = $configs['footer_year'] ?? '@2024';
+$link_group_tele = $configs['link_tele_group'] ?? 'https://t.me/crackpythonva';
+$site_avatar = $configs['site_avatar'] ?? '';
+
+$link_admin_tele = "https://t.me/iosnea";
+// Link Google Apps Script của bạn đã được đưa vào đây
+$link_get_key = "https://script.google.com/macros/s/AKfycbyqT2JLwKVgAop_i98W5YsHrkqMWyVjszgfGww4quRb_iN27EkLZv8_rr_2gIYk9wBT/exec";
+
+$products_list = mysqli_query($conn, "SELECT * FROM products ORDER BY id DESC");
+
+$is_admin = false;
+$is_logged_in = isset($_SESSION['username']);
+$time_left = 0;
+$user_key_type = "Thành viên";
+
+if($is_logged_in){
+    $u = $_SESSION['username'];
+    $user_q = mysqli_fetch_assoc(mysqli_query($conn, "SELECT role, key_type, expiry_date FROM users WHERE username = '$u'"));
+    if(($user_q['role'] ?? 0) == 1) $is_admin = true;
+    
+    $user_key_type_raw = $user_q['key_type'] ?? 'NONE';
+    if($user_key_type_raw == 'FREE') $user_key_type = "Free";
+    if($user_key_type_raw == 'VIP') $user_key_type = "Vip";
+    
+    if(!empty($user_q['expiry_date'])) {
+        $expiry = strtotime($user_q['expiry_date']);
+        $now = time();
+        $time_left = $expiry - $now;
+        if($time_left < 0) $time_left = 0;
+    }
+}
+
+// Xử lý nạp key
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (!$is_logged_in) { header("Location: ?status=not_logged_in"); exit(); }
+    $status = "key_wrong";
+    $u = $_SESSION['username'];
+    
+    if (isset($_POST['submit_vip'])) {
+        $key_vip = mysqli_real_escape_string($conn, $_POST['key_vip']);
+        $check = mysqli_query($conn, "SELECT * FROM keys_vip WHERE key_code = '$key_vip' AND status = 0 LIMIT 1");
+        if ($row = mysqli_fetch_assoc($check)) {
+            $hr = $row['duration_hours'];
+            mysqli_query($conn, "UPDATE keys_vip SET status = 1 WHERE key_code = '$key_vip'");
+            mysqli_query($conn, "UPDATE users SET key_type = 'VIP', expiry_date = DATE_ADD(NOW(), INTERVAL $hr HOUR) WHERE username = '$u'");
+            $status = "success";
+        }
+    } 
+    elseif (isset($_POST['submit_free'])) {
+        $key_free = mysqli_real_escape_string($conn, $_POST['key_free']);
+        $check = mysqli_query($conn, "SELECT * FROM keys_free WHERE key_code = '$key_free' AND status = 0 LIMIT 1");
+        if ($row = mysqli_fetch_assoc($check)) {
+            $hr = $row['duration_hours'] ?? 24;
+            mysqli_query($conn, "UPDATE keys_free SET status = 1 WHERE key_code = '$key_free'");
+            mysqli_query($conn, "UPDATE users SET key_type = 'FREE', expiry_date = DATE_ADD(NOW(), INTERVAL $hr HOUR) WHERE username = '$u'");
+            $status = "success";
+        }
+    }
+    header("Location: ?status=" . $status);
+    exit();
+}
+$status_msg = $_GET['status'] ?? "";
+?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Lấy Key Free - DEVNVIOS</title>
+    <title><?php echo $logo_text; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background: #000; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
-        
-        /* Hiệu ứng khung 7 màu đổi màu siêu nhanh */
-        .rgb-border {
-            padding: 5px;
-            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
-            background-size: 400%;
-            border-radius: 20px;
-            animation: rgb-run 1.2s linear infinite;
-            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
-        }
-
-        @keyframes rgb-run {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 100% 50%; }
-        }
-
-        .main-card {
-            background: #111;
-            border-radius: 15px;
-            padding: 30px;
-            text-align: center;
-            width: 100%;
-            max-width: 380px;
-        }
-
-        .key-box {
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid #333;
-            color: #00ff00;
-            font-family: 'Consolas', monospace;
-            font-size: 1.2rem;
-            text-shadow: 0 0 10px #00ff00;
-        }
-
-        .btn-copy {
-            background: linear-gradient(to right, #ff0000, #ff7300);
-            animation: pulse 1s infinite;
-            transition: 0.2s;
-            font-weight: 900;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-        .btn-copy:active { transform: scale(0.9); }
-
-        #toast {
-            visibility: hidden; min-width: 280px; background-color: #00ff00; color: #000;
-            text-align: center; border-radius: 10px; padding: 15px; position: fixed;
-            z-index: 100; left: 50%; bottom: 40px; transform: translateX(-50%);
-            font-weight: bold; font-size: 13px; box-shadow: 0 0 20px #00ff00;
-        }
-        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 40px; opacity: 1;} }
-        @keyframes fadeout { from {bottom: 40px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        body { background: #f4f6f9; font-family: sans-serif; -webkit-tap-highlight-color: transparent; min-height: 100vh; display: flex; flex-direction: column; }
+        .header-top { background: #1a2b3c; padding: 12px 15px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo-custom { font-size: 16px; font-weight: 900; color: #007bff; transform: skew(-15deg, -2deg) scale(1.1, 1.3); display: inline-block; }
+        .card-ios { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .input-key { border: 1px solid #ddd; padding: 10px; border-radius: 5px; width: 100%; font-size: 13px; outline: none; margin-top: 5px; }
+        .btn-act { background: #007bff; color: white; font-weight: bold; padding: 8px 20px; border-radius: 5px; text-transform: uppercase; font-size: 11px; cursor: pointer; border: none; }
+        .chu-meo { display: inline-block; transform: skewX(-8deg); }
     </style>
 </head>
 <body>
+    <header class="header-top flex justify-between items-center text-white">
+        <div class="logo-custom"><?php echo $logo_text; ?></div>
+        <div class="text-[10px] font-bold">
+            <?php if($is_logged_in): ?>
+                <span class="text-orange-400"><?php echo $user_key_type; ?></span> | <span id="timer" class="text-red-400">00:00:00</span>
+            <?php else: ?> Đăng nhập để sử dụng <?php endif; ?>
+        </div>
+    </header>
 
-    <div class="rgb-border">
-        <div class="main-card">
-            <h1 class="text-2xl font-black italic mb-6 tracking-tighter uppercase">Get Key Free</h1>
-            
-            <div id="key-display" class="key-box p-4 rounded-xl mb-6 break-all">
-                ĐANG QUÉT KEY...
+    <main class="max-w-xl mx-auto p-4 w-full flex-grow">
+        <?php if($status_msg == "success"): ?>
+            <div class="bg-green-100 text-green-700 p-3 rounded mb-4 text-xs font-bold text-center">KÍCH HOẠT THÀNH CÔNG!</div>
+        <?php elseif($status_msg == "key_wrong"): ?>
+            <div class="bg-red-100 text-red-700 p-3 rounded mb-4 text-xs font-bold text-center">KEY SAI HOẶC ĐÃ HẾT HẠN!</div>
+        <?php endif; ?>
+
+        <div class="bg-[#10b981] rounded-lg p-5 text-white flex items-center gap-4 mb-4 shadow-md">
+            <div class="w-16 h-16 shrink-0 bg-white/20 rounded flex items-center justify-center">
+                <i class="fas fa-bolt text-3xl"></i>
             </div>
-
-            <button onclick="copyKey()" class="btn-copy w-full py-4 rounded-xl text-white text-lg mb-6 shadow-lg">
-                <i class="fas fa-copy mr-2"></i> SAO CHÉP KEY
-            </button>
-
-            <div class="text-[12px] text-gray-400 text-left space-y-3 border-t border-gray-800 pt-4">
-                <p><i class="fas fa-check-circle text-green-500 mr-1"></i> Sau khi sao chép hãy dán vào trang web chính.</p>
-                <p><i class="fas fa-history text-blue-500 mr-1"></i> Key sẽ tự động biến mất và cập nhật key mới cho người sau.</p>
-                <p class="text-center font-bold">MUA KEY VIP LIÊN HỆ TELE: 
-                    <a href="https://t.me/iosnea" target="_blank" class="text-blue-400 underline">@iosnea</a>
-                </p>
+            <div>
+                <h2 class="text-lg font-bold uppercase chu-meo"><?php echo $banner_title; ?></h2>
+                <p class="text-[10px] opacity-90"><?php echo $banner_desc; ?></p>
             </div>
         </div>
-    </div>
 
-    <div id="toast">ĐÃ SAO CHÉP! HÃY DÁN VÀO TRANG WEB CHÍNH</div>
+        <div class="card-ios">
+            <h3 class="text-red-600 font-bold uppercase text-[11px] mb-3 border-b pb-1">Kích hoạt Key Vip</h3>
+            <form action="" method="POST">
+                <input type="text" name="key_vip" class="input-key" placeholder="Dán mã VIP vào đây..." required>
+                <div class="flex justify-between items-center mt-3">
+                    <a href="<?php echo $link_admin_tele; ?>" target="_blank" class="text-blue-500 text-[10px] font-bold uppercase underline">Mua Key VIP</a>
+                    <button type="submit" name="submit_vip" class="btn-act">Xác nhận</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card-ios">
+            <h3 class="text-gray-600 font-bold uppercase text-[11px] mb-3 border-b pb-1">Kích hoạt Key Free</h3>
+            <form action="" method="POST">
+                <input type="text" name="key_free" class="input-key" placeholder="Dán mã Free vào đây..." required>
+                <div class="flex justify-between items-center mt-3">
+                    <a href="https://toolfree.github.io/" target="_blank" class="text-orange-500 text-[10px] font-bold uppercase underline">Lấy Key Free (Tự động)</a>
+                    <button type="submit" name="submit_free" class="btn-act !bg-gray-600">Xác nhận</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="text-center">
+             <a href="<?php echo $link_group_tele; ?>" target="_blank" class="text-blue-600 font-bold text-xs uppercase tracking-widest">Gia nhập Telegram hỗ trợ</a>
+        </div>
+    </main>
+
+    <footer class="py-6 text-center text-gray-400 text-[10px] font-bold">
+        MADE BY <?php echo $footer_made_by; ?> | <?php echo $footer_year; ?>
+    </footer>
 
     <script>
-        // DÁN LINK GOOGLE APPS SCRIPT (WEB APP URL) VÀO ĐÂY
-        const SCRIPT_URL = "DÁN_LINK_APPS_SCRIPT_CỦA_BẠN_VÀO_ĐÂY";
-
-        async function fetchKey() {
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const data = await response.text();
-                document.getElementById('key-display').innerText = data;
-            } catch (e) {
-                document.getElementById('key-display').innerText = "LỖI KẾT NỐI!";
-            }
+        // Timer đếm ngược
+        let timeLeft = <?php echo $time_left; ?>;
+        function updateTimer() {
+            const display = document.getElementById('timer');
+            if(!display || timeLeft <= 0) return;
+            let h = Math.floor(timeLeft / 3600), m = Math.floor((timeLeft % 3600) / 60), s = timeLeft % 60;
+            display.innerHTML = (h<10?'0':'')+h + ":" + (m<10?'0':'')+m + ":" + (s<10?'0':'')+s;
+            timeLeft--;
         }
-
-        function copyKey() {
-            const key = document.getElementById('key-display').innerText;
-            if (key === "ĐANG QUÉT KEY..." || key === "HẾT KEY RỒI!" || key === "LỖI KẾT NỐI!") return;
-
-            navigator.clipboard.writeText(key).then(() => {
-                const toast = document.getElementById("toast");
-                toast.className = "show";
-                setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
-
-                document.getElementById('key-display').style.opacity = "0.1";
-                
-                // Tự động load lại sau 2 giây để Google Sheets kịp xóa dòng cũ
-                setTimeout(() => {
-                    location.reload();
-                }, 2000);
-            });
-        }
-        fetchKey();
+        if(timeLeft > 0) { setInterval(updateTimer, 1000); updateTimer(); }
+        
+        // Xóa tham số status trên URL sau 3 giây
+        setTimeout(() => {
+            window.history.replaceState(null, null, window.location.pathname);
+        }, 3000);
     </script>
 </body>
 </html>
