@@ -1,324 +1,129 @@
-<?php 
-include 'db.php'; 
-session_start(); 
-
-// --- Tự động xóa key khi hết hạn (Dựa trên thời gian thực hệ thống) ---
-if(isset($_SESSION['username'])){
-    $u_check = $_SESSION['username'];
-    mysqli_query($conn, "UPDATE users SET key_type = 'NONE', expiry_date = NULL WHERE username = '$u_check' AND expiry_date <= NOW() AND role != 1");
-}
-
-$configs = [];
-$res_config = mysqli_query($conn, "SELECT * FROM site_config");
-if($res_config) {
-    while($c = mysqli_fetch_assoc($res_config)) { 
-        $configs[$c['config_key']] = $c['config_value']; 
-    }
-}
-
-$logo_text = $configs['logo_text'] ?? 'DEVNVIOS.co';
-$chao_khach = $configs['chao_khach'] ?? 'Chào khách!';
-$banner_title = $configs['banner_title'] ?? 'DEVNVIOS.CO';
-$banner_desc = $configs['banner_desc'] ?? 'Tiện ích tool hỗ trợ & automation';
-$footer_made_by = $configs['footer_made_by'] ?? 'DEVNVIOS';
-$footer_year = $configs['footer_year'] ?? '@2024';
-$link_group_tele = $configs['link_tele_group'] ?? 'https://t.me/crackpythonva';
-$site_avatar = $configs['site_avatar'] ?? '';
-
-$link_admin_tele = "https://t.me/iosnea";
-$link_bypass = $configs['link_bypass'] ?? "#";
-$products_list = mysqli_query($conn, "SELECT * FROM products ORDER BY id DESC");
-
-$is_admin = false;
-$is_logged_in = isset($_SESSION['username']);
-$time_left = 0;
-$user_key_type = "Thành viên";
-$expiry_timestamp = 0; // Biến lưu mốc thời gian hết hạn
-
-if($is_logged_in){
-    $u = $_SESSION['username'];
-    $user_q = mysqli_fetch_assoc(mysqli_query($conn, "SELECT role, key_type, expiry_date FROM users WHERE username = '$u'"));
-    if(($user_q['role'] ?? 0) == 1) $is_admin = true;
-    
-    $user_key_type_raw = $user_q['key_type'] ?? 'NONE';
-    if($user_key_type_raw == 'FREE') $user_key_type = "Free";
-    if($user_key_type_raw == 'VIP') $user_key_type = "Vip";
-    
-    if(!empty($user_q['expiry_date'])) {
-        $expiry_timestamp = strtotime($user_q['expiry_date']); // Lấy mốc thời gian đích
-        $now = time(); 
-        $time_left = $expiry_timestamp - $now;
-        if($time_left < 0) $time_left = 0;
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (!$is_logged_in) { header("Location: ?status=not_logged_in"); exit(); }
-    $status = "key_wrong";
-    $u = $_SESSION['username'];
-    if (isset($_POST['submit_vip'])) {
-        $key_vip = mysqli_real_escape_string($conn, $_POST['key_vip']);
-        $check = mysqli_query($conn, "SELECT * FROM keys_vip WHERE key_code = '$key_vip' AND status = 0 LIMIT 1");
-        if ($row = mysqli_fetch_assoc($check)) {
-            $hr = $row['duration_hours'];
-            mysqli_query($conn, "UPDATE keys_vip SET status = 1 WHERE key_code = '$key_vip'");
-            mysqli_query($conn, "UPDATE users SET key_type = 'VIP', expiry_date = DATE_ADD(NOW(), INTERVAL $hr HOUR) WHERE username = '$u'");
-            $status = "success";
-        }
-    } 
-    elseif (isset($_POST['submit_free'])) {
-        $key_free = mysqli_real_escape_string($conn, $_POST['key_free']);
-        $check = mysqli_query($conn, "SELECT * FROM keys_free WHERE key_code = '$key_free' AND status = 0 LIMIT 1");
-        if ($row = mysqli_fetch_assoc($check)) {
-            $hr = $row['duration_hours'] ?? 24;
-            mysqli_query($conn, "UPDATE keys_free SET status = 1 WHERE key_code = '$key_free'");
-            mysqli_query($conn, "UPDATE users SET key_type = 'FREE', expiry_date = DATE_ADD(NOW(), INTERVAL $hr HOUR) WHERE username = '$u'");
-            $status = "success";
-        }
-    }
-    header("Location: ?status=" . $status);
-    exit();
-}
-$status_msg = $_GET['status'] ?? "";
-?>
 <!DOCTYPE html>
-<html lang="vi" style="scroll-behavior: smooth;">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $logo_text; ?></title>
+    <title>Hệ Thống Lấy Key Free - DEVNVIOS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background: #f4f6f9; font-family: sans-serif; -webkit-tap-highlight-color: transparent; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+        body { background: #000; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
         
-        .header-top { 
-            background: #1a2b3c; padding: 12px 15px; position: sticky; top: 0; z-index: 1000; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform;
+        /* Hiệu ứng khung 7 màu đổi màu siêu nhanh */
+        .rgb-border {
+            padding: 5px;
+            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+            background-size: 400%;
+            border-radius: 20px;
+            animation: rgb-run 1.2s linear infinite;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
         }
-        .header-hidden { transform: translateY(-110%); } 
-        
-        .logo-custom { 
-            font-size: 16px; font-weight: 900; color: #007bff; text-decoration: none;
-            display: inline-block; transform: skew(-15deg, -2deg) scale(1.1, 1.3); 
-            letter-spacing: 1px; text-shadow: 1px 1px 0px rgba(0,123,255,0.3);
-            text-transform: none; cursor: pointer;
-        }
-        
-        .chu-meo { display: inline-block; transform: skewX(-8deg); letter-spacing: -0.5px; }
-        .auth-blue { color: #007bff; font-weight: 800; font-size: 10px; text-transform: uppercase; cursor: pointer; }
 
-        #menu-content { 
-            max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s ease-in-out; 
-            position: absolute; right: 10px; top: 55px; background: white; border-radius: 8px; width: 230px; 
-            z-index: 9999; border: 1px solid #eee; box-shadow: 0 10px 25px rgba(0,0,0,0.2); visibility: hidden;
+        @keyframes rgb-run {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
         }
-        #menu-content.show { max-height: 80vh; opacity: 1; padding: 5px 0; visibility: visible; }
-        
-        .menu-link-small { display: block; padding: 10px 15px; font-size: 10px; font-weight: bold; text-transform: uppercase; color: #666; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
-        .tool-nav-item { display: flex; align-items: center; padding: 10px 15px; gap: 10px; border-bottom: 1px solid #f1f1f1; cursor: pointer; }
-        .tool-nav-item img { width: 24px; height: 24px; border-radius: 5px; object-fit: cover; }
-        .tool-nav-item span { font-size: 11px; font-weight: bold; color: #333; text-transform: uppercase; }
 
-        .card-ios { background: #fff; border-radius: 4px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; border-bottom: 1px solid #ddd; }
-        .input-key { border: 1px solid #ddd; padding: 8px 12px; border-radius: 4px; width: 100%; margin-top: 5px; font-size: 13px; outline: none; }
-        .btn-act { background: #007bff; color: white; font-weight: bold; padding: 6px 15px; border-radius: 4px; text-transform: uppercase; font-size: 11px; cursor: pointer; border: none; }
-        
-        .heart-beat { color: #ff3b30; animation: beat 0.8s infinite; display: inline-block; font-size: 10px; vertical-align: middle; }
-        @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-        
-        /* ĐÃ SỬA: Chân trang kích thước vừa phải, không quá nhỏ */
-        .footer-year { color: #9ca3af; font-size: 11px; display: block; margin-top: 3px; font-weight: normal; }
-        .footer-text { font-size: 12px !important; }
+        .main-card {
+            background: #111;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .key-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #333;
+            color: #00ff00;
+            font-family: 'Consolas', monospace;
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .btn-copy {
+            background: linear-gradient(to right, #ff0000, #ff7300);
+            animation: pulse 1s infinite;
+            transition: 0.2s;
+            font-weight: 900;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        .btn-copy:active { transform: scale(0.9); }
+
+        #toast {
+            visibility: hidden; min-width: 280px; background-color: #00ff00; color: #000;
+            text-align: center; border-radius: 10px; padding: 15px; position: fixed;
+            z-index: 100; left: 50%; bottom: 40px; transform: translateX(-50%);
+            font-weight: bold; font-size: 13px; box-shadow: 0 0 20px #00ff00;
+        }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 40px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 40px; opacity: 1;} to {bottom: 0; opacity: 0;} }
     </style>
 </head>
 <body>
-    <header id="main-header" class="header-top flex justify-between items-center text-white">
-        <div onclick="_go('Lw==')" class="logo-custom"><?php echo $logo_text; ?></div>
-        
-        <button id="menu-btn" onclick="toggleMenu(event)" class="text-xl p-1 focus:outline-none"><i class="fas fa-bars"></i></button>
-        
-        <div id="menu-content">
-            <div onclick="_go('Lw==')" class="menu-link-small"><i class="fas fa-home mr-2 text-blue-500"></i> Trang Chủ</div>
-            <div class="bg-gray-50 px-4 py-1 text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Danh sách Tool</div>
+
+    <div class="rgb-border">
+        <div class="main-card">
+            <h1 class="text-2xl font-black italic mb-6 tracking-tighter uppercase">Get Key Free</h1>
             
-            <?php 
-            mysqli_data_seek($products_list, 0); 
-            while($tool = mysqli_fetch_assoc($products_list)): 
-                $t_name = $tool['name']; $t_link = $tool['link']; $t_type = strtoupper($tool['type'] ?? 'FREE');
-            ?>
-                <div onclick="checkToolAccess('<?php echo $t_link; ?>', <?php echo ($t_type == 'VIP' ? 'true' : 'false'); ?>)" class="tool-nav-item">
-                    <img src="<?php echo $tool['image']; ?>" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2589/2589174.png'">
-                    <span><?php echo $t_name; ?> (<?php echo $t_type; ?>)</span>
-                </div>
-            <?php endwhile; ?>
+            <div id="key-display" class="key-box p-4 rounded-xl mb-6 break-all">
+                ĐANG QUÉT KEY...
+            </div>
 
-            <?php if($is_admin): ?> 
-                <div onclick="_go('YWRtaW5fY3A=')" class="menu-link-small text-red-600">Admin Cpanel</div> 
-            <?php endif; ?>
-            <?php if($is_logged_in): ?> 
-                <div onclick="_go('bG9nb3V0')" class="menu-link-small text-gray-400">Đăng Xuất</div> 
-            <?php endif; ?>
-        </div>
-    </header>
+            <button onclick="copyKey()" class="btn-copy w-full py-4 rounded-xl text-white text-lg mb-6 shadow-lg">
+                <i class="fas fa-copy mr-2"></i> SAO CHÉP KEY
+            </button>
 
-    <div class="bg-white border-b p-2 px-4 flex justify-between items-center shadow-sm">
-        <div class="text-[10px] font-bold italic text-gray-500 uppercase">
-            <?php if($is_logged_in): ?> 
-                Xin chào, <span class="text-blue-600"><?php echo $_SESSION['username']; ?></span> 
-                | <span class="text-orange-500"><?php echo $user_key_type; ?></span> 
-                | <span id="main_timer" class="font-mono text-red-500">00:00:00</span>
-            <?php else: ?> 
-                <?php echo $chao_khach; ?> 
-            <?php endif; ?>
-        </div>
-        <div class="flex gap-4">
-            <?php if(!$is_logged_in): ?> 
-                <div onclick="_go('bG9naW4=')" class="auth-blue">Đăng Nhập</div> 
-                <div onclick="_go('cmVnaXN0ZXI=')" class="auth-blue">Đăng Ký</div> 
-            <?php endif; ?>
+            <div class="text-[12px] text-gray-400 text-left space-y-3 border-t border-gray-800 pt-4">
+                <p><i class="fas fa-check-circle text-green-500 mr-1"></i> Sau khi sao chép hãy dán vào trang web chính.</p>
+                <p><i class="fas fa-history text-blue-500 mr-1"></i> Key sẽ tự động biến mất và cập nhật key mới cho người sau.</p>
+                <p class="text-center font-bold">MUA KEY VIP LIÊN HỆ TELE: 
+                    <a href="https://t.me/iosnea" target="_blank" class="text-blue-400 underline">@iosnea</a>
+                </p>
+            </div>
         </div>
     </div>
 
-    <main class="max-w-xl mx-auto p-4 mt-4 w-full flex-grow">
-        
-        <?php if($status_msg == "success"): ?>
-            <div id="status-alert" class="card-ios bg-green-50 text-green-600 text-center font-bold text-xs p-3 mb-3 rounded border-green-200 border">Kích hoạt Key thành công!</div>
-        <?php elseif($status_msg == "key_wrong"): ?>
-            <div id="status-alert" class="card-ios bg-red-50 text-red-600 text-center font-bold text-xs p-3 mb-3 rounded border-red-200 border">Key sai hoặc đã có người sử dụng!</div>
-        <?php elseif($status_msg == "not_logged_in"): ?>
-            <div id="status-alert" class="card-ios bg-orange-50 text-orange-600 text-center font-bold text-xs p-3 mb-3 rounded border-orange-200 border">Vui lòng Đăng Nhập để thực hiện!</div>
-        <?php endif; ?>
-
-        <div class="bg-[#10b981] rounded-lg p-5 text-white flex items-center gap-4 mb-2 shadow-sm">
-            <div class="w-16 h-16 flex items-center justify-center shrink-0">
-                <?php if(!empty($site_avatar)): ?> 
-                    <img src="<?php echo $site_avatar; ?>" class="w-full h-full object-cover rounded"> 
-                <?php else: ?> 
-                    <i class="fas fa-robot text-6xl"></i> 
-                <?php endif; ?>
-            </div>
-            <div>
-                <h2 class="text-lg font-bold uppercase chu-meo"><?php echo $banner_title; ?></h2>
-                <p class="text-[10px] opacity-95 chu-meo"><?php echo $banner_desc; ?></p>
-            </div>
-        </div>
-
-        <div class="text-center py-4">
-            <a href="<?php echo $link_group_tele; ?>" target="_blank" class="text-red-500 font-extrabold text-sm uppercase chu-meo">Tham gia nhóm telegram</a>
-        </div>
-
-        <div class="card-ios">
-            <h3 class="text-red-600 font-bold uppercase text-[11px] border-b-2 border-red-500 w-fit pb-1 mb-3 chu-meo">Key Vip</h3>
-            <form action="" method="POST">
-                <input type="text" name="key_vip" class="input-key" placeholder="Nhập Key VIP..." required>
-                <div class="flex justify-between items-center mt-3">
-                    <button type="button" onclick="toggleNL('nl-vip')" class="text-blue-600 text-[10px] font-bold uppercase">Xem thêm</button>
-                    <button type="submit" name="submit_vip" class="btn-act">Kích Hoạt</button>
-                </div>
-            </form>
-            <div id="nl-vip" style="display:none;" class="mt-3 p-3 bg-blue-50 rounded text-xs text-gray-600 italic">
-                Mua key vip liên hệ <a href="<?php echo $link_admin_tele; ?>" target="_blank" class="text-blue-600 font-bold underline">@iosnea</a>
-            </div>
-        </div>
-
-        <div class="card-ios">
-            <h3 class="text-gray-600 font-bold uppercase text-[11px] border-b-2 border-gray-500 w-fit pb-1 mb-3 chu-meo">Key Free</h3>
-            <form action="" method="POST">
-                <input type="text" name="key_free" class="input-key" placeholder="Nhập Key Free..." required>
-                <div class="flex justify-between items-center mt-3">
-                    <button type="button" onclick="toggleNL('nl-free')" class="text-blue-600 text-[10px] font-bold uppercase">Xem thêm</button>
-                    <button type="submit" name="submit_free" class="btn-act !bg-gray-600">Kích Hoạt</button>
-                </div>
-            </form>
-            <div id="nl-free" style="display:none;" class="mt-3 text-center">
-                <a href="<?php echo $link_bypass; ?>" target="_blank" class="text-orange-500 text-[11px] font-bold underline italic uppercase">Lấy Key Miễn Phí Tại Đây</a>
-            </div>
-        </div>
-    </main>
-
-    <footer class="py-4 text-center bg-white border-t mt-auto">
-        <div class="footer-text uppercase font-bold text-gray-600">
-            MADE WITH <span class="heart-beat"><i class="fas fa-heart"></i></span> BY <div onclick="_go('Lw==')" class="inline text-blue-600 cursor-pointer"><?php echo $footer_made_by; ?></div>
-            <span class="footer-year"><?php echo $footer_year; ?></span>
-        </div>
-    </footer>
+    <div id="toast">ĐÃ SAO CHÉP! HÃY DÁN VÀO TRANG WEB CHÍNH</div>
 
     <script>
-        const _go = (x) => window.location.href = window.location.origin + (atob(x).startsWith('/') ? atob(x) : '/' + atob(x));
+        // QUAN TRỌNG: Dán link Web App từ Google Sheets của bạn vào đây
+        const SCRIPT_URL = "DÁN_LINK_GOOGLE_APPS_SCRIPT_CỦA_BẠN_VÀO_ĐÂY";
 
-        const userKeyType = "<?php echo $user_key_type; ?>";
-        const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
-
-        function checkToolAccess(link, isVipTool) {
-            if (!isLoggedIn) { alert("Bạn cần đăng nhập!"); return; }
-            if (isVipTool && userKeyType !== "Vip") { alert("Chỉ dành cho VIP!"); }
-            else if (userKeyType === "Thành viên") { alert("Vui lòng nhập Key!"); }
-            else { window.location.href = link; }
-        }
-
-        // --- ĐÃ SỬA: Đếm ngược thời gian thực dựa trên mốc hết hạn cố định ---
-        // Lấy thời gian hiện tại của trình duyệt và tính toán sai lệch so với Server
-        const serverExpiry = <?php echo $expiry_timestamp; ?> * 1000;
-        
-        function updateTimer() {
-            const display = document.getElementById('main_timer');
-            if(!display) return;
-            
-            const now = Date.now();
-            const diff = Math.floor((serverExpiry - now) / 1000);
-
-            if(diff <= 0) {
-                display.innerHTML = "00:00:00";
-                return;
+        async function fetchKey() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.text();
+                document.getElementById('key-display').innerText = data;
+            } catch (e) {
+                document.getElementById('key-display').innerText = "LỖI KẾT NỐI!";
             }
-            
-            let h = Math.floor(diff / 3600);
-            let m = Math.floor((diff % 3600) / 60);
-            let s = diff % 60;
-            
-            display.innerHTML = (h<10?'0':'')+h + ":" + (m<10?'0':'')+m + ":" + (s<10?'0':'')+s;
         }
 
-        // Khởi chạy đếm ngược nếu có thời gian hết hạn
-        if(serverExpiry > 0) { 
-            setInterval(updateTimer, 1000); 
-            updateTimer(); 
+        function copyKey() {
+            const key = document.getElementById('key-display').innerText;
+            if (key === "ĐANG QUÉT KEY..." || key === "HẾT KEY RỒI!" || key === "LỖI KẾT NỐI!") return;
+
+            navigator.clipboard.writeText(key).then(() => {
+                const toast = document.getElementById("toast");
+                toast.className = "show";
+                setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+
+                document.getElementById('key-display').style.opacity = "0.1";
+                
+                // Tự động load lại để "đốt" key cũ và hiện key mới sau 2 giây
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            });
         }
-
-        if (window.history.replaceState) { 
-            window.history.replaceState(null, null, window.location.pathname); 
-        }
-        setTimeout(() => {
-            const alertBox = document.getElementById('status-alert');
-            if(alertBox) {
-                alertBox.style.transition = "opacity 0.5s ease";
-                alertBox.style.opacity = "0";
-                setTimeout(() => alertBox.style.display = "none", 500);
-            }
-        }, 3000);
-
-        function toggleMenu(e) { e.stopPropagation(); document.getElementById('menu-content').classList.toggle('show'); }
-        function toggleNL(id) { const x = document.getElementById(id); x.style.display = (x.style.display === 'block') ? 'none' : 'block'; }
-        
-        let lastScroll = 0;
-        const header = document.getElementById("main-header");
-        window.addEventListener("scroll", () => {
-            const currentScroll = window.pageYOffset;
-            const menu = document.getElementById('menu-content');
-            if (menu.classList.contains('show')) menu.classList.remove('show');
-            if (Math.abs(currentScroll - lastScroll) > 5) {
-                if (currentScroll > lastScroll && currentScroll > 60) { header.classList.add("header-hidden"); } 
-                else if (currentScroll < lastScroll) { header.classList.remove("header-hidden"); }
-                lastScroll = currentScroll;
-            }
-        }, { passive: true });
-
-        document.addEventListener('click', (e) => {
-            const menu = document.getElementById('menu-content');
-            if (menu && !menu.contains(e.target) && !document.getElementById('menu-btn').contains(e.target)) { menu.classList.remove('show'); }
-        });
+        fetchKey();
     </script>
 </body>
 </html>
