@@ -3,53 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL ACCESS - DEVNVIOS</title>
+    <title>TERMINAL - DEVNVIOS ACCESS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #000; color: #ff0000; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .terminal { border: 1px solid #ff0000; padding: 25px; background: #050505; width: 380px; box-shadow: 0 0 20px rgba(255,0,0,0.4); text-align: center; }
-        input { background: #000; border: 1px solid #ff0000; color: #fff; width: 100%; padding: 12px; text-align: center; margin: 15px 0; outline: none; border-radius: 4px; }
-        .btn-exec { background: #ff0000; color: #000; width: 100%; padding: 14px; font-weight: bold; cursor: pointer; border: none; text-transform: uppercase; transition: 0.3s; }
-        .btn-exec:hover { background: #fff; box-shadow: 0 0 10px #fff; }
-        .btn-get { display: inline-block; margin-top: 15px; color: #fff; font-size: 12px; text-decoration: none; border: 1px solid #333; padding: 8px 15px; border-radius: 4px; }
-        .btn-get:hover { border-color: #ff0000; color: #ff0000; }
-        #result { margin-top: 20px; color: #00ff00; font-weight: bold; min-height: 45px; word-break: break-all; border-top: 1px solid #222; padding-top: 10px; }
+        body { background: #000; color: #ff0000; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
+        .terminal { border: 2px solid #ff0000; padding: 40px; background: rgba(10, 0, 0, 0.95); width: 450px; position: relative; box-shadow: 0 0 30px rgba(255, 0, 0, 0.2); }
+        .terminal::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #ff0000; animation: scan 3s linear infinite; opacity: 0.3; }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+        input { background: #000; border: 1px solid #440000; color: #fff; width: 100%; padding: 15px; text-align: center; margin: 25px 0; outline: none; border-radius: 4px; transition: 0.3s; }
+        input:focus { border-color: #ff0000; box-shadow: 0 0 10px #ff0000; }
+        .btn-exec { background: #ff0000; color: #000; width: 100%; padding: 16px; font-weight: 900; cursor: pointer; border: none; letter-spacing: 2px; transition: 0.3s; }
+        .btn-exec:hover { background: #fff; transform: scale(1.02); }
+        .btn-get { display: block; margin-top: 25px; color: #888; font-size: 11px; text-decoration: none; text-align: center; border: 1px solid #222; padding: 10px; border-radius: 4px; }
+        .btn-get:hover { color: #fff; border-color: #ff0000; background: #110000; }
+        #result { margin-top: 25px; padding: 15px; border-top: 1px solid #222; min-height: 60px; text-align: center; font-size: 14px; }
+        .glitch { animation: glitch 1s linear infinite; }
+        @keyframes glitch { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
     <div class="terminal">
-        <div style="font-size: 11px; letter-spacing: 2px;">[ AUTHENTICATION ]</div>
-        <input type="text" id="tokenInput" placeholder="DÁN MÃ TOKEN VÀO ĐÂY...">
-        <button onclick="verify()" id="execBtn" class="btn-exec">XÁC MINH NGAY</button>
-        <div id="result">HỆ THỐNG SẴN SÀNG...</div>
-        <a href="get-token.html" target="_blank" class="btn-get">CLICK LẤY MÃ TOKEN</a>
+        <div class="glitch" style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">[ SYSTEM STATUS: SECURE ]</div>
+        <p style="font-size: 10px; color: #555;">VUI LÒNG NHẬP TOKEN ĐỂ TRÍCH XUẤT KEY</p>
+        
+        <input type="text" id="tokenInput" placeholder="Nhập mã Token của bạn..." spellcheck="false">
+        
+        <button onclick="verify()" id="execBtn" class="btn-exec">XÁC MINH HỆ THỐNG</button>
+        
+        <div id="result">ĐANG CHỜ NHẬP DỮ LIỆU...</div>
+
+        <a href="get-token.html" target="_blank" class="btn-get">CHƯA CÓ TOKEN? CLICK VÀO ĐÂY</a>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyLkLo8xV73F4WgTZxITt-XcX2yapCVuqiBat8JEh85nLxjeokyIKK8pa1Lg03djLkr/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbymLRM2XANAGkaOy1MG1oBuaQKzKYR92tmjHyiph92uTvQKV56sJ2RvPL0AGflVMVs/exec";
 
         async function verify() {
             const token = document.getElementById('tokenInput').value.trim();
             const resBox = document.getElementById('result');
-            if(!token) return alert("Nhập mã Token bạn lấy từ link vượt!");
+            if(!token) return alert("Hệ thống yêu cầu mã Token!");
 
-            resBox.innerText = "ĐANG KIỂM TRA MÃ...";
-            resBox.style.color = "#ffff00";
-
+            resBox.innerHTML = "<span style='color: #ffff00;'>ĐANG GIẢI MÃ DỮ LIỆU...</span>";
             try {
-                const response = await fetch(`${API_URL}?action=verify&token=${token}`);
-                const data = await response.text();
+                const res = await fetch(`${API_URL}?action=verify&token=${token}`);
+                const data = await res.text();
                 
                 if(data.includes("DEV-")) {
-                    resBox.style.color = "#00ff00";
-                    resBox.innerHTML = `KEY CỦA BẠN:<br><span style="color:#fff; font-size:16px;">${data}</span>`;
+                    resBox.innerHTML = `TRÍCH XUẤT THÀNH CÔNG:<br><span style="color:#fff; font-size:18px; text-shadow: 0 0 10px #fff;">${data}</span>`;
                 } else {
                     resBox.innerText = data;
                     resBox.style.color = "#ff0000";
                 }
             } catch (e) {
-                resBox.innerText = "LỖI: KHÔNG THỂ KẾT NỐI SERVER!";
-                resBox.style.color = "#ff0000";
+                resBox.innerText = "LỖI KẾT NỐI SERVER!";
             }
         }
     </script>
