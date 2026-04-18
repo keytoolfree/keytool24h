@@ -3,150 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL ACCESS - DEVNVIOS</title>
+    <title>SECURE ACCESS - DEVNVIOS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
         body { background: #000; color: #ff0000; font-family: 'Space Mono', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
-        
-        /* HIỆU ỨNG VIỀN RGB QUÉT ĐỎ RỰC */
-        .neon-frame { position: relative; padding: 2px; background: linear-gradient(90deg, #ff0000, #220000, #ff0000); background-size: 200%; animation: move 0.8s linear infinite; border-radius: 4px; box-shadow: 0 0 30px rgba(255, 0, 0, 0.4); }
+        .neon-frame { position: relative; padding: 2px; background: linear-gradient(90deg, #ff0000, #1a0000, #ff0000); background-size: 200%; animation: move 0.6s linear infinite; border-radius: 2px; box-shadow: 0 0 50px rgba(255, 0, 0, 0.5); }
         @keyframes move { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
-        
-        .terminal { background: #050505; padding: 40px 30px; width: 100%; max-width: 500px; position: relative; border: 1px solid rgba(255, 0, 0, 0.2); }
-        
-        #key-box { background: #000; border: 1px solid #ff0000; color: #fff; padding: 30px; font-size: 1rem; text-align: center; font-weight: bold; min-height: 140px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.2); margin-bottom: 20px; }
-        
-        .btn-exec { background: #ff0000; color: #000; width: 100%; padding: 18px; font-weight: 900; letter-spacing: 2px; cursor: pointer; border: none; transition: 0.2s; clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%); }
-        .btn-exec:hover { background: #fff; box-shadow: 0 0 20px #fff; }
-
-        .vip-promo { background: linear-gradient(rgba(255,0,0,0.1), transparent); border: 1px dashed #ff0000; padding: 15px; margin-top: 20px; text-align: center; }
-        #timer { font-size: 1.8rem; color: #ff0000; font-weight: 900; text-shadow: 0 0 15px #ff0000; }
-        
-        .contact-link { display: flex; align-items: center; gap: 10px; padding: 10px; border-left: 2px solid #ff0000; background: #0a0a0a; margin-top: 10px; transition: 0.3s; }
-        .contact-link:hover { background: #1a0000; }
+        .terminal { background: #050505; padding: 40px 30px; width: 100vw; height: 100vh; max-width: 550px; max-height: 600px; border: 1px solid #ff0000; position: relative; }
+        #key-box { background: rgba(255, 0, 0, 0.05); border: 2px dashed #ff0000; color: #fff; padding: 30px; font-size: 1.1rem; text-align: center; font-weight: bold; min-height: 150px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+        .btn-exec { background: #ff0000; color: #000; width: 100%; padding: 20px; font-weight: 900; letter-spacing: 4px; cursor: pointer; border: none; clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%); transition: 0.3s; }
+        .btn-exec:hover { background: #fff; box-shadow: 0 0 30px #fff; }
+        #timer { font-size: 2.2rem; color: #ff0000; font-weight: 900; text-shadow: 0 0 20px #ff0000; }
+        .vip-msg { background: #111; border: 1px solid #ff0000; padding: 15px; margin-top: 20px; text-align: center; font-size: 11px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
     <div class="neon-frame">
         <div class="terminal">
-            <div class="flex justify-between items-center mb-6 text-[10px] font-bold">
-                <span>[ AUTHENTICATION SYSTEM ]</span>
-                <span class="animate-pulse text-red-500">SECURED SESSION</span>
+            <div class="flex justify-between items-center mb-6 text-[10px]">
+                <span class="font-bold">[ SECURITY LEVEL: MAXIMUM ]</span>
+                <span id="user-ip" class="text-white">IP: LOADING...</span>
             </div>
-            
+
             <div id="key-box">
-                <span class="animate-pulse">REQUESTING DATA FROM SERVER...</span>
+                <div class="animate-pulse">ĐANG TRUY XUẤT DỮ LIỆU...</div>
             </div>
 
             <div id="action-area">
-                <button id="main-btn" onclick="handleCopy()" class="btn-exec">EXECUTE COPY</button>
+                <button onclick="executeCopy()" class="btn-exec">EXECUTE COPY</button>
             </div>
 
             <div id="vip-area" class="hidden">
-                <div class="vip-promo">
-                    <p class="text-[10px] text-white font-bold mb-2">💎 NÂNG CẤP TRẢI NGHIỆM 💎</p>
-                    <p class="text-[11px] text-gray-400 leading-relaxed">Nếu mua <span class="text-yellow-400 font-bold">KEY VIP</span> bạn có thể sử dụng được những tool đẳng cấp nhất Việt Nam tại <span class="text-blue-400 underline font-bold">devnvios.io.vn</span></p>
+                <div class="vip-msg">
+                    <p class="text-white mb-2">💎 HỆ THỐNG ĐÃ KHÓA THIẾT BỊ 24H 💎</p>
+                    <p class="text-gray-400">Mua <span class="text-red-500 font-bold">KEY VIP</span> để sử dụng những tool đẳng cấp nhất Việt Nam tại <br><a href="https://devnvios.io.vn" class="text-blue-500 underline font-bold">devnvios.io.vn</a></p>
                 </div>
             </div>
 
-            <div class="mt-8 space-y-2">
-                <a href="https://devnvios.io.vn" target="_blank" class="contact-link">
-                    <i class="fas fa-globe text-xs"></i>
-                    <span class="text-[10px] font-bold text-white uppercase italic">Official Store: devnvios.io.vn</span>
-                </a>
-                <a href="https://t.me/crackpythonva" target="_blank" class="contact-link">
-                    <i class="fab fa-telegram-plane text-xs"></i>
-                    <span class="text-[10px] font-bold text-white uppercase italic">Telegram: t.me/crackpythonva</span>
-                </a>
+            <div class="mt-10 pt-6 border-t border-red-900 space-y-2 text-[10px] text-gray-500">
+                <p>> GROUP: T.ME/CRACKPYTHONVA</p>
+                <p>> ADMIN: @IOSNEA</p>
+                <p>> STATUS: ENCRYPTED_SUCCESS</p>
             </div>
         </div>
     </div>
 
     <script>
+        // Link Apps Script của mày
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqT2JLwKVgAop_i98W5YsHrkqMWyVjszgfGww4quRb_iN27EkLZv8_rr_2gIYk9wBT/exec";
-        const WAIT_TIME = 24 * 60 * 60 * 1000;
+        const COOLDOWN = 24 * 60 * 60 * 1000;
 
-        function startTimer(expiry) {
+        async function getClientIP() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                document.getElementById('user-ip').innerText = "IP: " + data.ip;
+                return data.ip;
+            } catch { return "0.0.0.0"; }
+        }
+
+        function runTimer(expiry) {
             const display = document.getElementById('key-box');
-            const actionArea = document.getElementById('action-area');
-            const vipArea = document.getElementById('vip-area');
-            
-            actionArea.innerHTML = `<p class="text-center text-[10px] text-red-500 mt-4 font-bold animate-pulse">ACCESS DENIED - CHẾ ĐỘ CHỜ ĐANG KÍCH HOẠT</p>`;
-            vipArea.classList.remove('hidden');
+            document.getElementById('action-area').classList.add('hidden');
+            document.getElementById('vip-area').classList.remove('hidden');
 
-            const timerInterval = setInterval(() => {
+            const timer = setInterval(() => {
                 const now = new Date().getTime();
-                const distance = expiry - now;
-
-                if (distance < 0) {
-                    clearInterval(timerInterval);
-                    localStorage.removeItem('next_access');
-                    window.location.href = "https://devnvios.io.vn";
+                const dist = expiry - now;
+                if (dist < 0) {
+                    clearInterval(timer);
+                    localStorage.removeItem('lock_24h');
+                    location.reload();
                     return;
                 }
-
-                const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const s = Math.floor((distance % (1000 * 60)) / 1000);
-                
-                display.innerHTML = `<div>
-                    <p class="text-[10px] text-gray-500 mb-2 font-bold uppercase">Bạn cần đợi để lấy key tiếp theo:</p>
-                    <div id="timer">${(h<10?'0':'')+h}:${(m<10?'0':'')+m}:${(s<10?'0':'')+s}</div>
-                </div>`;
+                const h = Math.floor(dist / (1000 * 60 * 60));
+                const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((dist % (1000 * 60)) / 1000);
+                display.innerHTML = `<div><p class="text-[10px] text-red-500 mb-2 uppercase font-bold">Hệ thống đang tạm khóa IP:</p><div id="timer">${(h<10?'0':'')+h}:${(m<10?'0':'')+m}:${(s<10?'0':'')+s}</div></div>`;
             }, 1000);
         }
 
         async function init() {
-            const nextAccess = localStorage.getItem('next_access');
-            if (nextAccess && new Date().getTime() < nextAccess) {
-                startTimer(parseInt(nextAccess));
+            const ip = await getClientIP();
+            const lock = localStorage.getItem('lock_24h');
+
+            // 1. Kiểm tra khóa 24h trong bộ nhớ trình duyệt
+            if (lock && new Date().getTime() < lock) {
+                runTimer(parseInt(lock));
                 return;
             }
 
-            const savedKey = localStorage.getItem('secure_token');
-            if (savedKey) {
-                document.getElementById('key-box').innerText = savedKey;
-            } else {
-                try {
-                    const res = await fetch(SCRIPT_URL);
-                    const key = await res.text();
-                    const clean = key.trim();
-                    if(clean && clean !== "HẾT KEY RỒI!") {
-                        document.getElementById('key-box').innerText = clean;
-                        localStorage.setItem('secure_token', clean);
-                    } else {
-                        document.getElementById('key-box').innerText = "HỆ THỐNG HẾT KEY - LIÊN HỆ ADMIN";
-                    }
-                } catch (e) {
-                    document.getElementById('key-box').innerText = "LỖI KẾT NỐI SERVER";
+            // 2. Gọi Script để check IP (Script này mày phải sửa để lưu IP vào Sheet và chặn)
+            try {
+                const res = await fetch(`${SCRIPT_URL}?ip=${ip}`);
+                const data = await res.text();
+                const clean = data.trim();
+
+                if (clean === "BANNED" || clean.includes("đợi")) {
+                    const fakeExpiry = new Date().getTime() + COOLDOWN;
+                    runTimer(fakeExpiry);
+                } else if (clean && clean !== "HẾT KEY RỒI!") {
+                    document.getElementById('key-box').innerText = clean;
+                } else {
+                    document.getElementById('key-box').innerText = "HỆ THỐNG ĐANG BẢO TRÌ KEY";
                 }
+            } catch {
+                document.getElementById('key-box').innerText = "SERVER_TIMEOUT";
             }
         }
 
-        function handleCopy() {
-            const display = document.getElementById('key-box');
-            const keyText = display.innerText;
-            if (keyText.includes("...") || keyText.includes("HẾT") || keyText.includes("MÃ HÓA")) return;
+        function executeCopy() {
+            const box = document.getElementById('key-box');
+            const val = box.innerText;
+            if (val.includes("...") || val.includes("BẢO TRÌ") || val.includes("MÃ HÓA")) return;
 
-            navigator.clipboard.writeText(keyText).then(() => {
-                alert(" [ CẢNH BÁO BẢO MẬT ] \n\n - ĐÃ SAO CHÉP KEY THÀNH CÔNG.\n - KHÔNG CHIA SẺ KEY DƯỚI MỌI HÌNH THỨC.\n - HỆ THỐNG SẼ BAN THIẾT BỊ NẾU PHÁT HIỆN DÙNG CHUNG.");
+            navigator.clipboard.writeText(val).then(() => {
+                alert(" [ SECURITY SYSTEM ] \n\n - ĐÃ SAO CHÉP KEY THÀNH CÔNG.\n - HỆ THỐNG ĐÃ GHI LẠI IP VÀ KHÓA TOÀN THIẾT BỊ 24H.\n - NẾU CHIA SẺ KEY SẼ BỊ BAN VĨNH VIỄN.");
+                
+                // Khóa ngay lập tức
+                const expiry = new Date().getTime() + COOLDOWN;
+                localStorage.setItem('lock_24h', expiry);
 
-                // Ghi thời gian chờ 24h
-                localStorage.setItem('next_access', new Date().getTime() + WAIT_TIME);
-                localStorage.removeItem('secure_token');
-
-                // Mã hóa box ngay lập tức
-                display.innerHTML = `<div class="text-[11px] text-gray-500">
-                    <span class="text-red-600 font-bold uppercase">KEY ĐÃ ĐƯỢC MÃ HÓA.</span><br>
-                    HÃY QUAY LẠI TRANG CHỦ ĐỂ SỬ DỤNG.
-                </div>`;
+                // Mã hóa nội dung
+                box.innerHTML = `<div class="text-[11px] text-red-500 font-bold uppercase">KEY ĐÃ ĐƯỢC MÃ HÓA.<br>HÃY QUAY LẠI TRANG CHỦ ĐỂ KÍCH HOẠT.</div>`;
                 
                 setTimeout(() => { location.reload(); }, 2000);
             });
         }
+
         init();
     </script>
 </body>
