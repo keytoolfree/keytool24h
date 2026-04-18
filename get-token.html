@@ -2,43 +2,47 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GET TOKEN - DEVNVIOS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #000; color: #ff0000; font-family: monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .box { border: 1px solid #ff0000; padding: 40px; background: #050505; text-align: center; width: 350px; }
-        #token-display { font-size: 20px; color: #fff; margin: 20px 0; padding: 10px; border: 1px dashed #ff0000; min-height: 40px; }
-        .btn-copy { background: #fff; color: #000; width: 100%; padding: 12px; font-weight: bold; cursor: pointer; border: none; }
+        body { background: #000; color: #ff0000; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .box { border: 1px solid #ff0000; padding: 40px; background: #050505; text-align: center; width: 350px; box-shadow: 0 0 20px rgba(255,0,0,0.3); }
+        #token-display { font-size: 22px; color: #fff; margin: 25px 0; padding: 15px; border: 1px dashed #ff0000; background: #111; min-height: 50px; }
+        .btn-copy { background: #fff; color: #000; width: 100%; padding: 12px; font-weight: bold; cursor: pointer; border: none; transition: 0.3s; }
+        .btn-copy:hover:not(:disabled) { background: #ff0000; color: #fff; }
+        .btn-copy:disabled { background: #333; color: #666; cursor: not-allowed; }
     </style>
 </head>
 <body>
     <div class="box">
-        <div style="font-size: 10px;">[ YOUR ACCESS TOKEN ]</div>
-        <div id="token-display">ĐANG TẠO...</div>
-        <button onclick="copyToken()" id="copyBtn" class="btn-copy" disabled>SAO CHÉP MÃ</button>
-        <p style="font-size: 10px; color: #555; margin-top: 20px;">Quay lại trang chủ và dán mã này vào.</p>
+        <div style="font-size: 10px; letter-spacing: 1px;">[ TOKEN GENERATOR ]</div>
+        <div id="token-display">ĐANG TẠO MÃ...</div>
+        <button onclick="copyToken()" id="copyBtn" class="btn-copy" disabled>SAO CHÉP TOKEN</button>
+        <p style="font-size: 10px; color: #666; margin-top: 25px;">SAO CHÉP MÃ VÀ QUAY LẠI TRANG CHỦ</p>
     </div>
 
     <script>
-        const API_URL = "URL_WEB_APP_GOOGLE_SCRIPT_CỦA_BẠN";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyLkLo8xV73F4WgTZxITt-XcX2yapCVuqiBat8JEh85nLxjeokyIKK8pa1Lg03djLkr/exec";
         const SECRET = "DEVNVIOS_PRO_2026";
 
         async function generate() {
             try {
-                const res = await fetch(`${API_URL}?action=generate&secret=${SECRET}`);
-                const token = await res.text();
+                const response = await fetch(`${API_URL}?action=generate&secret=${SECRET}`);
+                const token = await response.text();
                 document.getElementById('token-display').innerText = token;
                 document.getElementById('copyBtn').disabled = false;
             } catch (e) {
                 document.getElementById('token-display').innerText = "LỖI SERVER!";
+                document.getElementById('token-display').style.color = "red";
             }
         }
 
         function copyToken() {
-            const t = document.getElementById('token-display').innerText;
-            navigator.clipboard.writeText(t);
-            alert("Đã sao chép Token thành công!");
-            window.close(); // Tùy chọn: Đóng tab này sau khi copy
+            const text = document.getElementById('token-display').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Đã copy Token! Bây giờ hãy dán nó vào trang Verify.");
+            });
         }
         
         generate();
