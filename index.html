@@ -1,137 +1,58 @@
-<?php 
-include 'db.php'; 
-session_start(); 
-
-if(isset($_SESSION['username'])){
-    $u_check = $_SESSION['username'];
-    mysqli_query($conn, "UPDATE users SET key_type = 'NONE', expiry_date = NULL WHERE username = '$u_check' AND expiry_date <= NOW() AND role != 1");
-}
-
-$configs = [];
-$res_config = mysqli_query($conn, "SELECT * FROM site_config");
-if($res_config) { while($c = mysqli_fetch_assoc($res_config)) { $configs[$c['config_key']] = $c['config_value']; } }
-
-$logo_text = $configs['logo_text'] ?? 'DEVNVIOS.co';
-$chao_khach = $configs['chao_khach'] ?? 'Chào khách!';
-$banner_title = $configs['banner_title'] ?? 'DEVNVIOS.CO';
-$banner_desc = $configs['banner_desc'] ?? 'Tiện ích tool hỗ trợ & automation';
-$footer_made_by = $configs['footer_made_by'] ?? 'DEVNVIOS';
-$footer_year = $configs['footer_year'] ?? '@2024';
-$link_group_tele = $configs['link_tele_group'] ?? 'https://t.me/crackpythonva';
-$site_avatar = $configs['site_avatar'] ?? '';
-$link_admin_tele = "https://t.me/iosnea";
-
-$products_list = mysqli_query($conn, "SELECT * FROM products ORDER BY id DESC");
-$is_admin = false;
-$is_logged_in = isset($_SESSION['username']);
-$time_left = 0;
-$user_key_type = "Thành viên";
-
-if($is_logged_in){
-    $u = $_SESSION['username'];
-    $user_q = mysqli_fetch_assoc(mysqli_query($conn, "SELECT role, key_type, expiry_date FROM users WHERE username = '$u'"));
-    if(($user_q['role'] ?? 0) == 1) $is_admin = true;
-    $user_key_type_raw = $user_q['key_type'] ?? 'NONE';
-    if($user_key_type_raw == 'FREE') $user_key_type = "Free";
-    if($user_key_type_raw == 'VIP') $user_key_type = "Vip";
-    if(!empty($user_q['expiry_date'])) {
-        $expiry = strtotime($user_q['expiry_date']);
-        $now = time();
-        $time_left = $expiry - $now;
-        if($time_left < 0) $time_left = 0;
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (!$is_logged_in) { header("Location: ?status=not_logged_in"); exit(); }
-    $status = "key_wrong";
-    $u = $_SESSION['username'];
-    if (isset($_POST['submit_vip'])) {
-        $key_vip = mysqli_real_escape_string($conn, $_POST['key_vip']);
-        $check = mysqli_query($conn, "SELECT * FROM keys_vip WHERE key_code = '$key_vip' AND status = 0 LIMIT 1");
-        if ($row = mysqli_fetch_assoc($check)) {
-            $hr = $row['duration_hours'];
-            mysqli_query($conn, "UPDATE keys_vip SET status = 1 WHERE key_code = '$key_vip'");
-            mysqli_query($conn, "UPDATE users SET key_type = 'VIP', expiry_date = DATE_ADD(NOW(), INTERVAL $hr HOUR) WHERE username = '$u'");
-            $status = "success";
-        }
-    } 
-    elseif (isset($_POST['submit_free'])) {
-        $key_free = mysqli_real_escape_string($conn, $_POST['key_free']);
-        $check = mysqli_query($conn, "SELECT * FROM keys_free WHERE key_code = '$key_free' AND status = 0 LIMIT 1");
-        if ($row = mysqli_fetch_assoc($check)) {
-            $hr = $row['duration_hours'] ?? 24;
-            mysqli_query($conn, "UPDATE keys_free SET status = 1 WHERE key_code = '$key_free'");
-            mysqli_query($conn, "UPDATE users SET key_type = 'FREE', expiry_date = DATE_ADD(NOW(), INTERVAL $hr HOUR) WHERE username = '$u'");
-            $status = "success";
-        }
-    }
-    header("Location: ?status=" . $status);
-    exit();
-}
-$status_msg = $_GET['status'] ?? "";
-?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $logo_text; ?></title>
+    <title>GET KEY FREE</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background: #f4f6f9; font-family: sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
-        .header-top { background: #1a2b3c; padding: 12px 15px; position: sticky; top: 0; z-index: 1000; }
-        .logo-custom { font-size: 16px; font-weight: 900; color: #007bff; transform: skew(-15deg, -2deg) scale(1.1, 1.3); display: inline-block; }
-        .card-ios { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        .btn-act { background: #007bff; color: white; font-weight: bold; padding: 8px 20px; border-radius: 5px; text-transform: uppercase; font-size: 11px; }
+        body { background: #000; color: #0f0; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { border: 2px solid #0f0; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 0 20px #0f0; background: rgba(0,0,0,0.9); max-width: 90%; }
+        .key-box { background: #111; border: 1px dashed #0f0; padding: 15px; margin: 20px 0; font-size: 1.2rem; word-break: break-all; min-height: 50px; }
+        button { background: #0f0; color: #000; font-weight: bold; padding: 10px 25px; border: none; border-radius: 5px; cursor: pointer; text-transform: uppercase; }
+        button:hover { background: #0c0; box-shadow: 0 0 10px #0f0; }
     </style>
 </head>
 <body>
-    <header class="header-top flex justify-between items-center text-white">
-        <div class="logo-custom"><?php echo $logo_text; ?></div>
-        <div class="text-[10px] font-bold">
-            <?php if($is_logged_in): ?> <span id="timer" class="text-red-400">00:00:00</span> <?php endif; ?>
-        </div>
-    </header>
-
-    <main class="max-w-xl mx-auto p-4 w-full">
-        <?php if($status_msg == "success"): ?> <div class="bg-green-100 text-green-700 p-3 rounded mb-4 text-xs font-bold text-center">KÍCH HOẠT THÀNH CÔNG!</div> <?php endif; ?>
+    <div class="box">
+        <h2 style="color: #fff; margin-bottom: 10px;">HỆ THỐNG LẤY KEY TỰ ĐỘNG</h2>
+        <p style="font-size: 0.8rem;">Vui lòng đợi trong giây lát...</p>
         
-        <div class="bg-[#10b981] rounded-lg p-5 text-white flex items-center gap-4 mb-4">
-            <h2 class="text-lg font-bold uppercase"><?php echo $banner_title; ?></h2>
-        </div>
-
-        <div class="card-ios">
-            <h3 class="text-red-600 font-bold text-[11px] mb-3">KEY VIP</h3>
-            <form action="" method="POST">
-                <input type="text" name="key_vip" class="border w-full p-2 rounded mb-3 text-sm" placeholder="Nhập Key VIP..." required>
-                <button type="submit" name="submit_vip" class="btn-act w-full">Kích hoạt VIP</button>
-            </form>
-        </div>
-
-        <div class="card-ios">
-            <h3 class="text-gray-600 font-bold text-[11px] mb-3">KEY FREE</h3>
-            <form action="" method="POST">
-                <input type="text" name="key_free" class="border w-full p-2 rounded mb-3 text-sm" placeholder="Nhập Key Free..." required>
-                <div class="flex justify-between items-center">
-                    <a href="https://keytoolfree.github.io/keytool24h/" target="_blank" class="text-orange-500 text-[10px] font-bold underline uppercase">Bấm lấy key free tại đây</a>
-                    <button type="submit" name="submit_free" class="btn-act !bg-gray-600">Kích hoạt Free</button>
-                </div>
-            </form>
-        </div>
-    </main>
+        <div id="key-display" class="key-box">ĐANG TẢI KEY...</div>
+        
+        <button onclick="copyKey()">SAO CHÉP KEY</button>
+        <p style="margin-top: 15px; font-size: 0.7rem; color: #888;">Sau khi copy, hãy quay lại web chính để kích hoạt.</p>
+    </div>
 
     <script>
-        let timeLeft = <?php echo $time_left; ?>;
-        function updateTimer() {
-            const display = document.getElementById('timer');
-            if(!display || timeLeft <= 0) return;
-            let h = Math.floor(timeLeft / 3600), m = Math.floor((timeLeft % 3600) / 60), s = timeLeft % 60;
-            display.innerHTML = (h<10?'0':'')+h + ":" + (m<10?'0':'')+m + ":" + (s<10?'0':'')+s;
-            timeLeft--;
+        // LINK SCRIPT GOOGLE SHEETS CỦA BẠN
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqT2JLwKVgAop_i98W5YsHrkqMWyVjszgfGww4quRb_iN27EkLZv8_rr_2gIYk9wBT/exec";
+
+        async function fetchKey() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.text();
+                document.getElementById('key-display').innerText = data.trim();
+            } catch (error) {
+                document.getElementById('key-display').innerText = "LỖI: KHÔNG LẤY ĐƯỢC KEY!";
+            }
         }
-        if(timeLeft > 0) { setInterval(updateTimer, 1000); updateTimer(); }
+
+        function copyKey() {
+            const keyText = document.getElementById('key-display').innerText;
+            if(keyText && keyText !== "ĐANG TẢI KEY..." && keyText !== "LỖI: KHÔNG LẤY ĐƯỢC KEY!") {
+                navigator.clipboard.writeText(keyText).then(() => {
+                    alert("Đã sao chép: " + keyText);
+                    // Reload để lấy key mới (Google Script sẽ tự xóa dòng cũ)
+                    location.reload();
+                });
+            } else {
+                alert("Chưa có key để copy!");
+            }
+        }
+
+        // Tự động chạy khi mở trang
+        fetchKey();
     </script>
 </body>
 </html>
